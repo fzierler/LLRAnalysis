@@ -1,0 +1,12 @@
+name: llr
+dependencies:
+  - numpy=1.20.3
+  - matplotlib=3.5.2
+  - pandas=1.4.4
+  - yaml=0.2.5
+  - regex=2022.7.9
+  - mpmath=1.2.1
+  - scipy=1.7.3
+  - yaml=0.2.5
+  - pyyaml=6.0
+  - jupyter=1.0.0
