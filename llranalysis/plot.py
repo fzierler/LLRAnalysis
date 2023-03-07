@@ -2,23 +2,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import llranalysis.llr as llr
+import llranalysis.doubleGaussian as dg
 import llranalysis.error as error
 import llranalysis.standard as standard
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes  
-
-
-plt.style.use('default')
-plt.rcParams.update({'xtick.labelsize' : 18,
-                     'ytick.labelsize' : 18,
-                     'axes.formatter.useoffset' : False,
-                     'legend.fontsize' : 20,
-                     'axes.labelsize' : 30,
-                     "text.usetex": True,
-                     "font.family": "serif",
-                     "font.serif": "Computer Modern Roman",
-                     'lines.linewidth':2,
-                     'figure.figsize' : (10,10),
-                     'figure.autolayout': True})
+import matplotlib as mpl
 
 def plot_RM_repeats(boot_folder, n_boots, interval):
     RM_df_names = [boot_folder + str(m) + '/CSV/RM.csv' for m in range(n_boots)]
@@ -45,14 +33,19 @@ def plot_RM_repeats(boot_folder, n_boots, interval):
     axsins.locator_params(axis="y", nbins=5)
     plt.show()
 
-def plot_RM_swaps(boot_folder, repeat):
+def plot_RM_swaps(boot_folder, repeat, cmap):
     RM_df = pd.read_csv(boot_folder + str(repeat) + '/CSV/RM.csv')
     RM_swap_df = RM_df.sort_values(by=['Rep','n'], ignore_index = True)
-    for r in zip(np.unique(RM_swap_df['Rep'])):
-        plt.plot(-RM_swap_df[RM_swap_df['Rep'] == r]['a'].values)
+    cols = mpl.colormaps[cmap]
+    max_N = 0
+    for i, n in enumerate(np.unique(RM_swap_df['Rep'])):
+        an = -RM_swap_df[RM_swap_df['Rep'] == n]['a'].values
+        plt.plot(np.arange(1,len(an)+1), an,lw=1, c= cols(i / len(np.unique(RM_swap_df['Rep']))) )
         plt.xlabel('RM iteration m') # ,fontsize = 30
         plt.ylabel('$a_n^{(m)}$') # , fontsize = 30
+        if max_N < len(an) + 1: max_N = len(an)+1 
     plt.ylim([-RM_df['a'].max(), -RM_df['a'].min()])
+    plt.xlim(1, max_N)
     plt.show()
 
 def plot_comparison_histograms(boot_folder, n_repeats, std_files, std_folder,num_samples = 200, error_type= 'standard deviation'):
@@ -85,7 +78,7 @@ def plot_comparison_histograms(boot_folder, n_repeats, std_files, std_folder,num
     plt.show()
 
 
-def fxa_hist(boot_folder, selected_repeat, ulim):
+def fxa_hist(boot_folder, selected_repeat):
     _, fxa_df, final_df = llr.ReadCSVFull(f'{boot_folder}{selected_repeat}/CSV/')
     V = final_df['V'].values[0]   
     for Ek, a in zip(final_df['Ek'].values,final_df['a'].values):
@@ -93,8 +86,32 @@ def fxa_hist(boot_folder, selected_repeat, ulim):
         S = S[S != 0]
         plt.hist(S / (6*V), histtype='step', bins = 20, density = True)
     plt.xlabel('$u_p$', fontsize = 30)
-    plt.ylabel('$P_{\\beta}(u_p)$', fontsize = 30)
-    #plt.xlim(ulim)
-    #plt.title('dE ='+ str(final_df['dE'].values[0]))
+    plt.ylabel('$P_{a_n}(u_p)$', fontsize = 30)
     plt.yticks([],[])
+    plt.show()
+
+def plot_DG(LLR_folder, selected_repeat):
+    DG = pd.read_csv(f'{LLR_folder}{selected_repeat}/CSV/DG.csv').iloc[0]
+    final_df = pd.read_csv(f'{LLR_folder}{selected_repeat}/CSV/final.csv')
+    Bc = DG['Bc']
+    xopt = [DG['A1'],DG['M1'],DG['S1'], DG['A2'],DG['M2'],DG['S2']]
+    V = 6*final_df['V'].values[0]
+    lnz = llr.calc_lnZ(final_df['Ek'].values, final_df['a'].values, Bc)
+    x, y = llr.calc_prob_distribution(final_df, Bc, lnz)
+    plt.plot(x, dg.double_Gaussian(x, xopt[0], xopt[1], xopt[2], xopt[3], xopt[4], xopt[5]), 'm--', label = 'Fitted Double Gaussian',lw=1)
+    plt.plot(x,y, 'b-', lw = 1,label= 'LLR')
+    xs_tmp = np.linspace(DG['Emin'],DG['Emax'],int(DG['Epoints']))
+    b,a = dg.double_Gaussian_find_peaks(xs_tmp, xopt[0], xopt[1], xopt[2], xopt[3], xopt[4], xopt[5])
+    plt.arrow(b[1], a[0]/2, b[0] - b[1],0,width = 0.001*a[0], length_includes_head=True, color='k')
+    plt.arrow(b[0], a[0]/2, b[1] - b[0],0,width = 0.001*a[0], length_includes_head=True, color='k')
+    plt.text(b[1] - (b[1] - b[0])/2, (a[0]*1.06)/2, '$\\Delta \\langle u_p \\rangle_{\\beta_c}$',va ='baseline', horizontalalignment='center',fontsize=30)
+    plt.yticks([])
+    plt.legend(fontsize=20)
+    plt.axvline(b[0]  , ls = '--', c= 'k', label='Peak location')
+    plt.axvline(b[1] , ls = '--', c= 'k')
+    plt.xlabel('$ u_p $', fontsize=30)
+    plt.ylabel('$P_{\\beta_c}( u_p )$',fontsize=30)
+    N = 1
+    plt.xlim([np.min(x[y > ((0.1 * (max(y) / N)))]),np.max(x[y > ((0.1 * (max(y) / N)))])])
+    plt.legend(fontsize=20)
     plt.show()

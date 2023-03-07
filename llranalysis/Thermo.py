@@ -68,7 +68,7 @@ def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard de
     S,T,F,U = thermodynamics(boot_folder,n_repeats, Ep)
     F /= V
     ak = (1/ T).mean(axis = 0)
-    ak_err = (1/ T).std(axis = 0,ddof=1)
+    ak_err = error.calculate_error_set((1/ T),num_samples,error_type);
     S_avr = S.mean(axis=0); T_avr = T.mean(axis=0); F_avr = F.mean(axis=0); U_avr = U.mean(axis=0);
     S_err = error.calculate_error_set(S,num_samples,error_type); T_err = error.calculate_error_set(T,num_samples,error_type);
     F_err = error.calculate_error_set(F,num_samples,error_type); U_err = error.calculate_error_set(U,num_samples,error_type);

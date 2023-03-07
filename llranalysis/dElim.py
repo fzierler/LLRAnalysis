@@ -7,18 +7,6 @@ import llranalysis.error as error
 import llranalysis.standard as standard
 import llranalysis.utils as utils
 
-plt.style.use('default')
-plt.rcParams.update({'xtick.labelsize' : 18,
-                     'ytick.labelsize' : 18,
-                     'axes.formatter.useoffset' : False,
-                     'legend.fontsize' : 20,
-                     'axes.labelsize' : 30,
-                     "text.usetex": True,
-                     "font.family": "serif",
-                     "font.serif": "Computer Modern Roman",
-                     'lines.linewidth':1,
-                     'figure.figsize' : (10,10),
-                     'figure.autolayout': True})
 
 def compare_dE_plot_a(boot_folders, n_repeats, blim,ulim,num_samples=200, error_type = 'standard deviation'):
     colours = ['b','g','r','c','m','y','b','g','r','c','m','y','b','g','r','c','m','y']
@@ -53,16 +41,20 @@ def compare_dE_plot_a(boot_folders, n_repeats, blim,ulim,num_samples=200, error_
 
 def dE_DG_critical_beta(full_folders, reduced_folders, additional_folders, num_repeats,num_samples=200, error_type = 'standard deviation', plt_a=False):
     miny =100.;maxy = 0.
+    DG_bc_dE = np.array([]); DG_bc_dE_err = np.array([])
+    dEsq = np.array([])
     for i, rf in enumerate(additional_folders):
-        c = 'orange'
-        dEsq = ((pd.read_csv(rf  + '0/CSV/' + 'final.csv')['dE'].values[0]/( 6.*pd.read_csv(rf  + '0/CSV/' + 'final.csv')['V'].values[0])) ** 2.)
+        c = 'g'
+        dEsq = np.append(dEsq, ((pd.read_csv(rf  + '0/CSV/' + 'final.csv')['dE'].values[0]/( 6.*pd.read_csv(rf  + '0/CSV/' + 'final.csv')['V'].values[0])) ** 2.))
         DG_df = pd.DataFrame()
         for nr in range(num_repeats):
             DG_df = pd.concat([DG_df, pd.read_csv(f'{rf}/{nr}/CSV/DG.csv')])
-        plt.plot(dEsq*np.ones_like(DG_df['Bc']), DG_df['Bc'], 'kx')
-        DG_bc_dE = DG_df['Bc'].values.mean(); DG_bc_dE_err=error.calculate_error(DG_df['Bc'].values, num_samples, error_type = error_type)
-        plt.errorbar(dEsq, DG_bc_dE ,DG_bc_dE_err, color = c, marker='o',capsize=7)
-    mindEsq = dEsq
+        plt.plot(dEsq[-1]*np.ones_like(DG_df['Bc']), DG_df['Bc'], 'kx')
+        DG_bc_dE = np.append(DG_bc_dE, DG_df['Bc'].values.mean()); DG_bc_dE_err=np.append(DG_bc_dE_err,error.calculate_error(DG_df['Bc'].values, num_samples, error_type = error_type))
+        if rf not in full_folders: plt.errorbar(dEsq[-1], DG_bc_dE[-1] ,DG_bc_dE_err[-1], color = c, marker='o',capsize=10, capthick=5)
+    DG_bc_0, DG_bc_0_err = utils.plot_extrap(dEsq,DG_bc_dE,DG_bc_dE_err, np.arange(len(dEsq)), c, max(dEsq))
+    plt.errorbar(0,DG_bc_0,DG_bc_0_err, color=c, marker= '^', capsize=10, capthick=5)  
+    mindEsq = (np.sort(dEsq)[-1] + np.sort(dEsq)[-2]) / 2
     DG_bc_dE = np.array([]); DG_bc_dE_err = np.array([])
     dEsq = np.array([])
     for i, rf in enumerate(reduced_folders):
@@ -72,12 +64,13 @@ def dE_DG_critical_beta(full_folders, reduced_folders, additional_folders, num_r
         for nr in range(num_repeats):
             DG_df = pd.concat([DG_df, pd.read_csv(f'{rf}/{nr}/CSV/DG.csv')])
         DG_bc_dE = np.append(DG_bc_dE, DG_df['Bc'].values.mean()); DG_bc_dE_err = np.append(DG_bc_dE_err,error.calculate_error(DG_df['Bc'].values, num_samples, error_type))
-        plt.errorbar(dEsq[-1], DG_bc_dE[-1] ,DG_bc_dE_err[-1], color= c, marker='o',capsize=5)
+        plt.errorbar(dEsq, DG_bc_dE ,DG_bc_dE_err, color= c, marker='o',capsize=12, capthick=5)
     DG_bc_0, DG_bc_0_err = utils.plot_extrap(dEsq,DG_bc_dE,DG_bc_dE_err, np.arange(len(dEsq)),c, mindEsq)
+    plt.errorbar(0,DG_bc_0,DG_bc_0_err, color=c, marker= '^', capsize=12, capthick=5) 
     DG_bc_dE = np.array([]); DG_bc_dE_err = np.array([])
     dEsq = np.array([])
     for i, rf in enumerate(full_folders):
-        c = 'orange'
+        c = 'darkorange'
         dEsq = np.append(dEsq,((pd.read_csv(rf  + '0/CSV/' + 'final.csv')['dE'].values[0]/(6.*pd.read_csv(rf  + '0/CSV/' + 'final.csv')['V'].values[0])) ** 2.))
         if plt_a:
             for counter in range(num_repeats):
@@ -90,26 +83,32 @@ def dE_DG_critical_beta(full_folders, reduced_folders, additional_folders, num_r
         if(miny > min(DG_df['Bc'])):miny =  min(DG_df['Bc'])
         if(maxy < max(DG_df['Bc'])):maxy =  max(DG_df['Bc'])
         DG_bc_dE = np.append(DG_bc_dE ,DG_df['Bc'].values.mean()); DG_bc_dE_err=np.append(DG_bc_dE_err,error.calculate_error(DG_df['Bc'].values, num_samples, error_type = error_type))
-        plt.errorbar(dEsq[-1], DG_bc_dE[-1] ,DG_bc_dE_err[-1], color = c, marker= 'o',capsize=7)
+        plt.errorbar(dEsq[-1], DG_bc_dE[-1] ,DG_bc_dE_err[-1], color = c, marker= 'o',capsize=8, capthick=5)
     DG_bc_0, DG_bc_0_err = utils.plot_extrap(dEsq,DG_bc_dE,DG_bc_dE_err, np.arange(len(dEsq)), c, mindEsq)
+    plt.errorbar(0,DG_bc_0,DG_bc_0_err, color=c, marker= '^', capsize=8, capthick=5) 
     plt.ylabel('$\\beta_c$')
     plt.xlabel('$(a^4 \\delta_E / (6\\tilde{V}))^2$')
     plt.ylim([miny,maxy])
-    plt.errorbar(np.NaN, np.NaN,np.NaN,marker = 'o', color = 'orange',label = 'All intervals')
+    plt.errorbar(np.NaN, np.NaN,np.NaN,marker = 'o', color = 'g',label = 'All intervals, all points')
+    plt.errorbar(np.NaN, np.NaN,np.NaN,marker = 'o', color = 'darkorange',label = 'All intervals, two finest point')
     plt.errorbar(np.NaN, np.NaN,np.NaN,marker= 'o',color= 'b', label = 'Even intervals')
     plt.legend() 
     plt.show()
 
-def dE_DG_critical_plaq(full_folders, reduced_folders, additional_folders, num_repeats,num_samples=200, error_type = 'standard deviation'):
+def dE_DG_critical_plaq(full_folders, reduced_folders, additional_folders, num_repeats,num_samples=1000, error_type = 'standard deviation'):
+    dEsq = np.array([])
+    up_bc_dE = np.array([]); up_bc_dE_err = np.array([])
     for i, rf in enumerate(additional_folders):
-        c = 'orange'
-        dEsq = ((pd.read_csv(rf  + '0/CSV/' + 'final.csv')['dE'].values[0]/( 6.*pd.read_csv(rf  + '0/CSV/' + 'final.csv')['V'].values[0])) ** 2.)
+        c = 'g'
+        dEsq  = np.append(dEsq , (pd.read_csv(rf  + '0/CSV/' + 'final.csv')['dE'].values[0]/( 6.*pd.read_csv(rf  + '0/CSV/' + 'final.csv')['V'].values[0])) ** 2.)
         DG_df = pd.DataFrame()
         for nr in range(num_repeats):
             DG_df = pd.concat([DG_df, pd.read_csv(f'{rf}/{nr}/CSV/DG.csv')])
-        up_bc_dE = DG_df['lh'].values.mean(); up_bc_dE_err=error.calculate_error(DG_df['lh'].values, num_samples, error_type = error_type)
-        plt.errorbar(dEsq, up_bc_dE ,up_bc_dE_err, color = c, marker='o',capsize=7)
-    mindEsq = dEsq
+        up_bc_dE = np.append(up_bc_dE, DG_df['lh'].values.mean()); up_bc_dE_err=np.append(up_bc_dE_err,error.calculate_error(DG_df['lh'].values, num_samples, error_type = error_type))
+        if rf not in full_folders: plt.errorbar(dEsq[-1], up_bc_dE[-1] ,up_bc_dE_err[-1], color = c, marker='o',capsize=10, capthick=5)
+    up_bc_0, up_bc_0_err = utils.plot_extrap(dEsq,up_bc_dE,up_bc_dE_err, np.arange(len(dEsq)), c, max(dEsq))
+    plt.errorbar(0,up_bc_0,up_bc_0_err, color=c, marker= '^', capsize=10, capthick=5)  
+    mindEsq = (np.sort(dEsq)[-1] + np.sort(dEsq)[-2]) / 2
     up_bc_dE = np.array([]); up_bc_dE_err = np.array([])
     dEsq = np.array([])
     for i, rf in enumerate(reduced_folders):
@@ -119,22 +118,25 @@ def dE_DG_critical_plaq(full_folders, reduced_folders, additional_folders, num_r
         for nr in range(num_repeats):
             DG_df = pd.concat([DG_df, pd.read_csv(f'{rf}/{nr}/CSV/DG.csv')])
         up_bc_dE = np.append(up_bc_dE, DG_df['lh'].values.mean()); up_bc_dE_err = np.append(up_bc_dE_err,error.calculate_error(DG_df['lh'].values, num_samples, error_type))
-        plt.errorbar(dEsq[-1], up_bc_dE[-1] ,up_bc_dE_err[-1], color= c, marker='o',capsize=5)
+        plt.errorbar(dEsq[-1], up_bc_dE[-1] ,up_bc_dE_err[-1], color= c, marker='o',capsize=12, capthick=5)
     up_bc_0, up_bc_0_err = utils.plot_extrap(dEsq,up_bc_dE,up_bc_dE_err, np.arange(len(dEsq)),c, mindEsq)
+    plt.errorbar(0,up_bc_0,up_bc_0_err, color=c, marker= '^', capsize=12, capthick=5)  
     up_bc_dE = np.array([]); up_bc_dE_err = np.array([])
     dEsq = np.array([])
     for i, rf in enumerate(full_folders):
-        c = 'orange'
+        c = 'darkorange'
         dEsq = np.append(dEsq,((pd.read_csv(rf  + '0/CSV/' + 'final.csv')['dE'].values[0]/(6.*pd.read_csv(rf  + '0/CSV/' + 'final.csv')['V'].values[0])) ** 2.))
         DG_df = pd.DataFrame()
         for nr in range(num_repeats):
             DG_df = pd.concat([DG_df, pd.read_csv(f'{rf}/{nr}/CSV/DG.csv')])
         up_bc_dE = np.append(up_bc_dE ,DG_df['lh'].values.mean()); up_bc_dE_err=np.append(up_bc_dE_err,error.calculate_error(DG_df['lh'].values, num_samples, error_type = error_type))
-        plt.errorbar(dEsq[-1], up_bc_dE[-1] ,up_bc_dE_err[-1], color = c, marker= 'o',capsize=7)
+        plt.errorbar(dEsq[-1], up_bc_dE[-1] ,up_bc_dE_err[-1], color = c, marker= 'o',capsize=8, capthick=5)
     up_bc_0, up_bc_0_err = utils.plot_extrap(dEsq,up_bc_dE,up_bc_dE_err, np.arange(len(dEsq)), c, mindEsq)
+    plt.errorbar(0,up_bc_0,up_bc_0_err, color=c, marker= '^', capsize=8, capthick=5)  
     plt.ylabel('$\Delta \\langle u_p \\rangle_{\\beta_c}$')
     plt.xlabel('$(a^4 \\delta_E / (6\\tilde{V}))^2$')
-    plt.errorbar(np.NaN, np.NaN,np.NaN,marker = 'o', color = 'orange',label = 'All intervals')
+    plt.errorbar(np.NaN, np.NaN,np.NaN,marker = 'o', color = 'g',label = 'All intervals, all points')
+    plt.errorbar(np.NaN, np.NaN,np.NaN,marker = 'o', color = 'darkorange',label = 'All intervals, two finest point')
     plt.errorbar(np.NaN, np.NaN,np.NaN,marker= 'o',color= 'b', label = 'Even intervals')
     plt.legend() 
     plt.show()  
@@ -212,4 +214,34 @@ def compare_dE_plot_y_difference(boot_folders, n_repeats, std_files, std_folder,
     plt.legend()
     plt.locator_params(axis="x", nbins=7)
     plt.show()
-    
+
+def compare_dE_plot_ymax(boot_folders, n_repeats, llr_key, label,minimum=False,num_samples=200, error_type = 'standard deviation'):
+    colours = ['b','g','r','c','m','y','b','g','r','c','m','y','b','g','r','c','m','y'] 
+    dEsq = np.array([])
+    bmax = np.array([])
+    bmax_err = np.array([])
+    ymax = np.array([])
+    ymax_err = np.array([])
+    for i, (bf, nr) in enumerate(zip(boot_folders, n_repeats)):
+        full_y = np.array([])
+        full_b = np.array([])
+        for j in range(nr):
+            full_df = pd.read_csv(f'{bf}{j}/CSV/obs.csv')
+            y = [full_df.iloc[i][llr_key] for i in range(len(full_df)) if not np.isnan(full_df.iloc[i][llr_key])]
+            b = [full_df.iloc[i]['b'] for i in range(len(full_df)) if not np.isnan(full_df.iloc[i][llr_key])]
+            if minimum: arg = np.argmin(y)
+            else: arg = np.argmax(y)
+            full_y = np.append(full_y, full_df[llr_key].values[arg])
+            full_b = np.append(full_b, full_df['b'].values[arg])
+        V = full_df['V'].values[0]
+        dEsq = np.append(dEsq, (pd.read_csv(f'{bf}0/CSV/final.csv')['dE'].values[0] / (6*V))**2.)
+        bmax_err = np.append(bmax_err, error.calculate_error(full_b, num_samples, error_type));
+        bmax = np.append(bmax,full_b.mean(axis=0)); 
+        ymax_err  = np.append(ymax_err,error.calculate_error(full_y, num_samples, error_type));
+        ymax =np.append(ymax, full_y.mean(axis=0)); 
+        plt.errorbar(dEsq[-1],ymax[-1],ymax_err[-1], fmt = colours[i] + 'o', capsize=10)
+    plt.ylabel(label, fontsize = 30)
+    ylim, ylim_err = utils.plot_extrap(dEsq,ymax,ymax_err, np.arange(len(dEsq)), 'k')
+    plt.xlabel('$a^4 \delta_E/ 6\\tilde{V}$', fontsize = 30)
+    plt.locator_params(axis="x", nbins=7)
+    plt.show()    

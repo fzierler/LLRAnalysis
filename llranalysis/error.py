@@ -12,6 +12,7 @@ def jackknife_error_mean(a):
 def calculate_error(a, num_samples = 200, error_type= 'standard deviation'):
     if(error_type == 'bootstrap'):return bootstrap_error_mean(a, num_samples)
     elif(error_type == 'jackknife'):return jackknife_error_mean(a)
+    elif(error_type == 'error on mean'):return a.std(ddof = 1) / np.sqrt(len(a))
     else: return a.std(ddof = 1) 
 
 def calculate_error_set(a, num_samples = 200, error_type= 'standard deviation'):

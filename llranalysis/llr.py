@@ -434,7 +434,7 @@ def calc_prob_distribution(final_df, beta, lnz, xs = np.array([])):
     ys = np.zeros(xs.size)
     for x, i in zip(xs,range(len(xs))):
         ys[i] = np.exp(calc_lnrho(final_df, x * (6*final_df['V'].values[0])) + beta*x*(6*final_df['V'].values[0]) - lnz)
-    return xs, ys
+    return np.array(xs), np.array(ys)
 
 def prepare_data(LLR_folder, n_repeats, n_replicas, std_files, std_folder, betas):
     std_df, hist_df = standard.CSV(std_files, std_folder)
