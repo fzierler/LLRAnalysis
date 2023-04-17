@@ -204,28 +204,21 @@ def CSV(files,folder, poly=True):
         RM, FA, FNL = ReadCSVFull(folder)
     return RM, FA, FNL
 
-def ReadObservables(betas, final_df, fa_df, folder, file = 'obs.csv'):
+def ReadObservables(betas, final_df, fa_df, folder, file = 'obs.csv', calc_poly = True):
     print('Obs_DF')
     file_loc = folder + file
     exists = os.path.isfile(file_loc) 
     if exists:
         obs_DF = pd.read_csv(file_loc)
-        if not np.array_equal(np.sort(obs_DF['b'].values, axis = None), np.sort(betas, axis = None)):
-            comp_b = []
-            for x in betas:
-                if x not in obs_DF['b'].values:
-                    comp_b.append(x)
-            obs_DF = obs_DF.append(calc_observables_full(comp_b,final_df,fa_df), ignore_index=True)
-            obs_DF.to_csv(file_loc, index = False)
     else:
-        obs_DF = calc_observables_full(betas,final_df,fa_df)
+        obs_DF = calc_observables_full(betas,final_df,fa_df, calc_poly=calc_poly)
         obs_DF.to_csv(file_loc, index = False)
     obs_DF = obs_DF.sort_values(by=['b'], ignore_index=True)
     obs_DF.to_csv(file_loc, index = False)
     obs_DF = obs_DF[np.in1d(obs_DF['b'].values, betas)].reset_index()
     return obs_DF
 
-def calc_observables_full(betas,final_df,fa_df):
+def calc_observables_full(betas,final_df,fa_df, calc_poly = True):
     Eks = final_df['Ek'].values
     dE = (Eks[1] - Eks[0]) 
     V = final_df['V'].values[0]
@@ -242,7 +235,7 @@ def calc_observables_full(betas,final_df,fa_df):
         E.append((calc_E(Eks, aks, beta)) / (6*V))
         E2.append((calc_E2(Eks, aks, beta)) / ((6*V) ** 2.))
         E4.append((calc_E4(Eks, aks, beta))/ ((6*V) ** 4.))
-        if len(fa_df['S']) > 0:
+        if len(fa_df['S']) > 0 and calc_poly:
             lnz_obs = calc_fxa_lnZ(fa_df, final_df, beta)
             poly.append(calc_fxa_obs(fa_df, final_df, beta, 'Poly', 1., lnz_obs))
             poly_sq.append(calc_fxa_obs(fa_df, final_df, beta, 'Poly', 2.,lnz_obs))
@@ -436,10 +429,11 @@ def calc_prob_distribution(final_df, beta, lnz, xs = np.array([])):
         ys[i] = np.exp(calc_lnrho(final_df, x * (6*final_df['V'].values[0])) + beta*x*(6*final_df['V'].values[0]) - lnz)
     return np.array(xs), np.array(ys)
 
-def prepare_data(LLR_folder, n_repeats, n_replicas, std_files, std_folder, betas):
+def prepare_data(LLR_folder, n_repeats, n_replicas, std_files, std_folder, betas, betas_critical):
     std_df, hist_df = standard.CSV(std_files, std_folder)
     for nr in range(n_repeats):
         files = [f'{LLR_folder}{nr}/Rep_{j}/out_0' for j in range(n_replicas)]
         RM, fa_df, final_df = CSV(files , f'{LLR_folder}{nr}/CSV/')
         comp_dF = ReadObservables(std_df['Beta'].values,final_df,fa_df,f'{LLR_folder}{nr}/CSV/',file = 'comparison.csv')
         full_dF = ReadObservables(betas,final_df,fa_df,f'{LLR_folder}{nr}/CSV/',file = 'obs.csv')
+        critical_dF = ReadObservables(betas_critical,final_df,fa_df,f'{LLR_folder}{nr}/CSV/',file = 'obs_critical.csv', calc_poly=False)

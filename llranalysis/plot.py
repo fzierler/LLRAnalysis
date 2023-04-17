@@ -22,7 +22,8 @@ def plot_RM_repeats(boot_folder, n_boots, interval):
         plt.xlabel('RM iteration m') #axs[0].set_
         plt.ylabel('$a_n^{(m)}$') #axs[0].set_
         lst_a.append(-RM[RM['Ek'] == Ek]['a'].values[-1])
-    
+    print('Ek/6V:', Ek / (6*RM['V'].values[0]))
+    print('DE/6V:', 2* RM['dE'].values[0] / (6*RM['V'].values[0]))
     axsins = inset_axes(ax, width = 3, height = 3, loc='upper left',
                    bbox_to_anchor=(0.5,1-0.4,.3,.3), bbox_transform=ax.transAxes)
     axsins.hist(lst_a, orientation="horizontal",histtype='step')
@@ -35,12 +36,13 @@ def plot_RM_repeats(boot_folder, n_boots, interval):
 
 def plot_RM_swaps(boot_folder, repeat, cmap):
     RM_df = pd.read_csv(boot_folder + str(repeat) + '/CSV/RM.csv')
-    RM_swap_df = RM_df.sort_values(by=['Rep','n'], ignore_index = True)
+    RM_df = RM_df.sort_values(by=['Rep','n'], ignore_index = True)
+    print('DE/6V:', 2* RM_df['dE'].values[0] / (6*RM_df['V'].values[0]))
     cols = mpl.colormaps[cmap]
     max_N = 0
-    for i, n in enumerate(np.unique(RM_swap_df['Rep'])):
-        an = -RM_swap_df[RM_swap_df['Rep'] == n]['a'].values
-        plt.plot(np.arange(1,len(an)+1), an,lw=1, c= cols(i / len(np.unique(RM_swap_df['Rep']))) )
+    for i, n in enumerate(np.unique(RM_df['Rep'])):
+        an = -RM_df[RM_df['Rep'] == n]['a'].values
+        plt.plot(np.arange(1,len(an)+1), an,lw=1, c= cols(i / len(np.unique(RM_df['Rep']))) )
         plt.xlabel('RM iteration m') # ,fontsize = 30
         plt.ylabel('$a_n^{(m)}$') # , fontsize = 30
         if max_N < len(an) + 1: max_N = len(an)+1 
@@ -52,6 +54,7 @@ def plot_comparison_histograms(boot_folder, n_repeats, std_files, std_folder,num
     std_df, hist_df = standard.CSV(std_files, std_folder)
     colours = ['b','g','r','c','m','y','k','b','g','r','c','m','y','k','b','g','r','c','m','y','k']
     for i, beta in enumerate(std_df['Beta'].values):
+        print('beta:',beta)
         xs = np.array([]);ys = np.array([])
         for nr in range(n_repeats):
             final_df = pd.read_csv(f'{boot_folder}{nr}/CSV/final.csv')
@@ -69,6 +72,7 @@ def plot_comparison_histograms(boot_folder, n_repeats, std_files, std_folder,num
         hist_tmp = hist_df[hist_df['Beta'] == beta]['Hist'].values
         bins_tmp = hist_df[hist_df['Beta'] == beta]['Bins'].values
         plt.plot(bins_tmp,hist_tmp, c = 'orange', ls = '-') #, lw = 1
+    print('DE/6V:', 2* final_df['dE'].values[0] / (6*final_df['V'].values[0]))
     plt.yticks([])
     plt.plot(np.NaN, np.NaN, 'b-', label='LLR')
     plt.plot(np.NaN, np.NaN, c='orange', ls='-', label='Importance sampling')
@@ -94,6 +98,7 @@ def plot_DG(LLR_folder, selected_repeat):
     DG = pd.read_csv(f'{LLR_folder}{selected_repeat}/CSV/DG.csv').iloc[0]
     final_df = pd.read_csv(f'{LLR_folder}{selected_repeat}/CSV/final.csv')
     Bc = DG['Bc']
+    print('Bc: ', Bc)
     xopt = [DG['A1'],DG['M1'],DG['S1'], DG['A2'],DG['M2'],DG['S2']]
     V = 6*final_df['V'].values[0]
     lnz = llr.calc_lnZ(final_df['Ek'].values, final_df['a'].values, Bc)
@@ -107,7 +112,7 @@ def plot_DG(LLR_folder, selected_repeat):
     plt.text(b[1] - (b[1] - b[0])/2, (a[0]*1.06)/2, '$\\Delta \\langle u_p \\rangle_{\\beta_c}$',va ='baseline', horizontalalignment='center',fontsize=30)
     plt.yticks([])
     plt.legend(fontsize=20)
-    plt.axvline(b[0]  , ls = '--', c= 'k', label='Peak location')
+    plt.axvline(b[0]  , ls = '--', c= 'k', label='Peak locations')
     plt.axvline(b[1] , ls = '--', c= 'k')
     plt.xlabel('$ u_p $', fontsize=30)
     plt.ylabel('$P_{\\beta_c}( u_p )$',fontsize=30)
