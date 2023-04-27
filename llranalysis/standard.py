@@ -87,6 +87,7 @@ def ReadOutput(file):
     poly = []
     plaq = []
     txt_plq = 'Plaquette'
+    print(file)
     with open(file, "r") as read_file:
         for line in read_file:
             if(re.findall(txt_beta, line) != []):
@@ -140,7 +141,7 @@ def CSV(files,folder):
 
 def SaveCSVFull(files,folder):
     print('Hop')
-    DF, HIST_DF = ReadOutput(files)
+    DF, HIST_DF = ReadOutputFull(files)
     print(DF)
     DF = DF.sort_values(by=['Beta'], ignore_index=True)
     DF.to_csv(folder + 'std.csv', index = False)
@@ -156,7 +157,7 @@ def ReadOutputFull(files):
     HIST_DF = pd.DataFrame()
     for file in files:
         print(file)
-        DF_tmp, HIST_DF_tmp = ReadOutput(file)
+        DF_tmp, HIST_DF_tmp = GetCSV(file)
         DF = DF.append(DF_tmp, ignore_index=True)
         HIST_DF = HIST_DF.append(HIST_DF_tmp, ignore_index=True)
     return DF, HIST_DF

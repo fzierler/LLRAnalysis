@@ -43,11 +43,29 @@ def plot_RM_swaps(boot_folder, repeat, cmap):
     for i, n in enumerate(np.unique(RM_df['Rep'])):
         an = -RM_df[RM_df['Rep'] == n]['a'].values
         plt.plot(np.arange(1,len(an)+1), an,lw=1, c= cols(i / len(np.unique(RM_df['Rep']))) )
-        plt.xlabel('RM iteration m') # ,fontsize = 30
+        plt.xlabel('RM iteration $m$') # ,fontsize = 30
         plt.ylabel('$a_n^{(m)}$') # , fontsize = 30
         if max_N < len(an) + 1: max_N = len(an)+1 
     plt.ylim([-RM_df['a'].max(), -RM_df['a'].min()])
     plt.xlim(1, max_N)
+    plt.show()
+
+def plot_RM_swaps_fancy(boot_folder, repeat, cmap):
+    plt.figure(figsize=(10,5))
+    RM_df = pd.read_csv(boot_folder + str(repeat) + '/CSV/RM.csv')
+    RM_df = RM_df.sort_values(by=['Rep','n'], ignore_index = True)
+    print('DE/6V:', 2* RM_df['dE'].values[0] / (6*RM_df['V'].values[0]))
+    cols = mpl.colormaps[cmap]
+    max_N = 0
+    for i, n in enumerate(np.unique(RM_df['Rep'])):
+        an = -RM_df[RM_df['Rep'] == n]['a'].values
+        plt.plot(np.arange(1,len(an)+1), an,lw=1, c= cols(i / len(np.unique(RM_df['Rep']))) )
+        #plt.xlabel('RM iteration $m$') # ,fontsize = 30
+        #plt.ylabel('$a_n^{(m)}$') # , fontsize = 30
+        if max_N < len(an) + 1: max_N = len(an)+1 
+    plt.ylim([-RM_df['a'].max(), -RM_df['a'].min()])
+    plt.xlim(1, max_N)
+    plt.axis('off')
     plt.show()
 
 def plot_comparison_histograms(boot_folder, n_repeats, std_files, std_folder,num_samples = 200, error_type= 'standard deviation'):
@@ -66,16 +84,16 @@ def plot_comparison_histograms(boot_folder, n_repeats, std_files, std_folder,num
         xs = xs.mean(axis = 0)
         ys_err = error.calculate_error_set(ys, num_samples, error_type)
         ys = ys.mean(axis = 0)
-        plt.plot(xs,(ys + ys_err)* (6*V), 'b--')
+        #plt.plot(xs,(ys + ys_err)* (6*V), 'b--')
         plt.plot(xs,ys* (6*V), 'b-')
-        plt.plot(xs,(ys - ys_err)* (6*V), 'b--')
+        #plt.plot(xs,(ys - ys_err)* (6*V), 'b--')
         hist_tmp = hist_df[hist_df['Beta'] == beta]['Hist'].values
         bins_tmp = hist_df[hist_df['Beta'] == beta]['Bins'].values
-        plt.plot(bins_tmp,hist_tmp, c = 'orange', ls = '-') #, lw = 1
+        plt.plot(bins_tmp,hist_tmp, c = 'darkorange', ls = '--') #, lw = 1
     print('DE/6V:', 2* final_df['dE'].values[0] / (6*final_df['V'].values[0]))
     plt.yticks([])
     plt.plot(np.NaN, np.NaN, 'b-', label='LLR')
-    plt.plot(np.NaN, np.NaN, c='orange', ls='-', label='Importance sampling')
+    plt.plot(np.NaN, np.NaN, c='darkorange', ls='-', label='Importance sampling')
     plt.legend() 
     plt.ylabel('$P_{\\beta}(u_p)$' )
     plt.xlabel('$u_p$')
@@ -88,9 +106,9 @@ def fxa_hist(boot_folder, selected_repeat):
     for Ek, a in zip(final_df['Ek'].values,final_df['a'].values):
         S = fxa_df[fxa_df['Ek'].values == Ek]['S'].values 
         S = S[S != 0]
-        plt.hist(S / (6*V), histtype='step', bins = 20, density = True)
+    plt.hist(fxa_df['S'].values  / (6*V), histtype='step', bins = 100, density = True)
     plt.xlabel('$u_p$', fontsize = 30)
-    plt.ylabel('$P_{a_n}(u_p)$', fontsize = 30)
+    plt.ylabel('$P(u_p)$', fontsize = 30)
     plt.yticks([],[])
     plt.show()
 
@@ -120,3 +138,18 @@ def plot_DG(LLR_folder, selected_repeat):
     plt.xlim([np.min(x[y > ((0.1 * (max(y) / N)))]),np.max(x[y > ((0.1 * (max(y) / N)))])])
     plt.legend(fontsize=20)
     plt.show()
+
+
+def prepare_table(boot_folders):
+    string_row = ''
+    for bf in boot_folders:
+        final_df = pd.read_csv(f'{bf}0/CSV/final.csv')
+        V = final_df['V'].values[0]
+        DE = final_df['dE'].values[0]*2 / (6*V)
+        E_min = min(1 - (final_df['Ek'].values/ (6*V))) - DE/2 
+        E_max = max(1 - (final_df['Ek'].values/ (6*V))) + DE/2
+        N = len(final_df['Ek'].values)
+        print()
+        print(2*((E_max - E_min) / DE) - 1, N)
+        string_row += f'${N}$ & ${DE:.4f}$ & ${E_min:.4f}$ & ${E_max:.4f}$ \\\\ \n'
+    print(string_row)

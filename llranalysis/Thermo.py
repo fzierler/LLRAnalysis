@@ -8,6 +8,7 @@ from llranalysis import llr
 import llranalysis.error as error
 from scipy.interpolate import interp1d
 from scipy.interpolate import InterpolatedUnivariateSpline
+import matplotlib as mpl
 
 def find_critical_region(E,b):
     cr = [len(InterpolatedUnivariateSpline(E,b - b[i]).roots())>2 for i in range(len(b))]
@@ -49,7 +50,7 @@ def thermodynamics(boot_folder,n_repeats, Es):
     return S,T,F,U
 
 
-def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard deviation'):
+def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard deviation',cmap = 'rainbow'):
     final_df = pd.read_csv(f'{boot_folder}0/CSV/final.csv')
     V = final_df['V'][0]; dE = final_df['dE'][0]; 
     Ep = np.unique(final_df['Ek'])
@@ -85,11 +86,13 @@ def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard de
     inds = F_red_avr > Fmin
     norm = colours.Normalize(vmin=0, vmax=inds.sum() + 2, clip=True)
     mapper = cm.ScalarMappable(norm=norm, cmap='gist_heat')
-    cs = np.array([(mapper.to_rgba(x)) for x in np.linspace(0,inds.sum(), num=inds.sum())])
-    for x, x_err, y, y_err, c in zip(T_avr[inds],T_err[inds], F_red_avr[inds], F_red_err[inds], cs):
-        plt.errorbar(x,y ,xerr=x_err, yerr= y_err, color = c, marker = 'o')
+    cols = cmap
+    #cols = mpl.colormaps[cmap]
+    #cs = np.array([(mapper.to_rgba(x)) for x in np.linspace(0,inds.sum(), num=inds.sum())])
+    for c, (x, x_err, y, y_err) in enumerate(zip(T_avr[inds],T_err[inds], F_red_avr[inds], F_red_err[inds])):
+        plt.errorbar(x,y ,xerr=x_err, yerr= y_err, color = cols(c / (len(T_avr[inds])-1)), marker = 'o')
     plt.xlabel('t', fontsize=30)
-    plt.ylabel('$a^4(F(t)+\Sigma t) / \\tilde{V}$', fontsize=30)
+    plt.ylabel('$f$', fontsize=30)
     Fmax = max(F_red_int_avr[meta_maxi],  F_red_int_avr[meta_mini])
     plt.ylim([Fmin,(2*Fmax-F_red_int_avr[maxi])])
     plt.xlim([T_int[mini+1],T_int[maxi - 3]])
@@ -106,8 +109,8 @@ def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard de
     
     axsins.set_xlabel('$u_p$', fontsize=30)
     axsins.set_ylabel('$a_n$', fontsize=30)
-    for x, y, y_err, c in zip((6*V - U_avr[inds])/(6*V),ak[inds],ak_err[inds], cs):
-        axsins.errorbar(x , y,y_err, color = c, marker = 'o')
+    for c, (x, y, y_err) in enumerate(zip((6*V - U_avr[inds])/(6*V),ak[inds],ak_err[inds])):
+        axsins.errorbar(x , y,y_err, color = cols(c/(len(ak[inds])-1)), marker = 'o')
     plt.show()
 
 def plot_ak_dist_potential(boot_folder, n_repeats, beta, ulim, blim,num_samples=200, error_type = 'standard deviation'):
