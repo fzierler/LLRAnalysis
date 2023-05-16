@@ -8,6 +8,26 @@ import llranalysis.standard as standard
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes  
 import matplotlib as mpl
 
+def plot_RM_convergence(boot_folder, n_boots, interval, N_iterations):
+    RM_df_names = [boot_folder + str(m) + '/CSV/RM.csv' for m in range(n_boots)]
+    figure_folder = boot_folder + 'Figures/'
+    RM = pd.read_csv(RM_df_names[0])
+    Eks = np.unique(RM['Ek'])
+    fig, ax =plt.subplots(figsize=(10,10)) # 
+    lst_a = np.zeros((n_boots,N_iterations))
+    for i, RM_df_name in enumerate(RM_df_names):
+        RM = pd.read_csv(RM_df_name)
+        Ek = Eks[interval]
+        #plt.plot(-RM[RM['Ek'] == Ek]['a'].values) # axs[0]
+        lst_a[i,:] = -RM[RM['Ek'] == Ek]['a'].values
+    print(lst_a)
+    plt.plot(lst_a.std(axis=0))
+    plt.xlabel('RM iteration m') #axs[0].set_
+    plt.ylabel('$\sigma_{a_n^{(m)}}$') #axs[0].set_
+    print('Ek/6V:', Ek / (6*RM['V'].values[0]))
+    print('DE/6V:', 2* RM['dE'].values[0] / (6*RM['V'].values[0]))
+    plt.show()
+
 def plot_RM_repeats(boot_folder, n_boots, interval):
     RM_df_names = [boot_folder + str(m) + '/CSV/RM.csv' for m in range(n_boots)]
     figure_folder = boot_folder + 'Figures/'

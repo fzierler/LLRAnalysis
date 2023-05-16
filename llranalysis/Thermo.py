@@ -51,6 +51,7 @@ def thermodynamics(boot_folder,n_repeats, Es):
 
 
 def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard deviation',cmap = 'rainbow'):
+    markersize = 5
     final_df = pd.read_csv(f'{boot_folder}0/CSV/final.csv')
     V = final_df['V'][0]; dE = final_df['dE'][0]; 
     Ep = np.unique(final_df['Ek'])
@@ -90,7 +91,7 @@ def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard de
     #cols = mpl.colormaps[cmap]
     #cs = np.array([(mapper.to_rgba(x)) for x in np.linspace(0,inds.sum(), num=inds.sum())])
     for c, (x, x_err, y, y_err) in enumerate(zip(T_avr[inds],T_err[inds], F_red_avr[inds], F_red_err[inds])):
-        plt.errorbar(x,y ,xerr=x_err, yerr= y_err, color = cols(c / (len(T_avr[inds])-1)), marker = 'o')
+        plt.errorbar(x,y ,xerr=x_err, yerr= y_err, color = cols(c / (len(T_avr[inds])-1)), marker = 'o', ms = markersize)
     plt.xlabel('t', fontsize=30)
     plt.ylabel('$f$', fontsize=30)
     Fmax = max(F_red_int_avr[meta_maxi],  F_red_int_avr[meta_mini])
@@ -110,7 +111,7 @@ def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard de
     axsins.set_xlabel('$u_p$', fontsize=30)
     axsins.set_ylabel('$a_n$', fontsize=30)
     for c, (x, y, y_err) in enumerate(zip((6*V - U_avr[inds])/(6*V),ak[inds],ak_err[inds])):
-        axsins.errorbar(x , y,y_err, color = cols(c/(len(ak[inds])-1)), marker = 'o')
+        axsins.errorbar(x , y,y_err, color = cols(c/(len(ak[inds])-1)), marker = 'o',ms = markersize)
     plt.show()
 
 def plot_ak_dist_potential(boot_folder, n_repeats, beta, ulim, blim,num_samples=200, error_type = 'standard deviation'):
@@ -164,4 +165,61 @@ def plot_ak_dist_potential(boot_folder, n_repeats, beta, ulim, blim,num_samples=
     axs[2].set_xlim(Emin, Emax)
     plt.tight_layout()
     axs[2].plot(xs  ,-np.log(ys))
+    plt.show()
+
+
+def plot_fxa_polyakovloop_critical(boot_folder,n_repeats,selected_repeat, num_samples=200, error_type = 'standard deviation'):
+    final_df = pd.read_csv(f'{boot_folder}0/CSV/final.csv')
+    V = final_df['V'][0]; dE = final_df['dE'][0]; 
+    Ep = np.unique(final_df['Ek'])
+    S,T,F,U = thermodynamics(boot_folder,n_repeats, np.linspace(Ep.min(), Ep.max(), 100))
+    F /= V
+    Sigma = S.mean() / V
+    S_int = S.mean(axis=0); T_int = T.mean(axis=0); F_int = F.mean(axis=0); U_int = U.mean(axis=0);
+    S_int_err = error.calculate_error_set(S,num_samples,error_type); T_int_err = error.calculate_error_set(T,num_samples,error_type);
+    F_int_err = error.calculate_error_set(F,num_samples,error_type); U_int_err = error.calculate_error_set(U,num_samples,error_type);
+    F_red_int_avr = (F + Sigma*T).mean(axis=0);
+    F_red_int_err = error.calculate_error_set((F + Sigma*T),num_samples,error_type);
+    
+    mini,meta_mini, midi,meta_maxi, maxi = find_critical_region(6*V - U_int,T_int)  
+    S,T,F,U = thermodynamics(boot_folder,n_repeats, Ep)
+    F /= V
+    ak = (1/ T).mean(axis = 0)
+    ak_err = error.calculate_error_set((1/ T),num_samples,error_type);
+    S_avr = S.mean(axis=0); T_avr = T.mean(axis=0); F_avr = F.mean(axis=0); U_avr = U.mean(axis=0);
+    S_err = error.calculate_error_set(S,num_samples,error_type); T_err = error.calculate_error_set(T,num_samples,error_type);
+    F_err = error.calculate_error_set(F,num_samples,error_type); U_err = error.calculate_error_set(U,num_samples,error_type);
+    F_red_avr = (F + Sigma*T).mean(axis=0) 
+    F_red_err = error.calculate_error_set((F + Sigma*T),num_samples,error_type);
+    Fmax = max(F_red_int_avr[meta_maxi],  F_red_int_avr[meta_mini])
+    Fmin = 2*F_red_int_avr[mini]-Fmax
+    inds = F_red_avr > Fmin
+
+    tach_inds = (U_avr > U_int[meta_maxi]) * (U_avr < U_int[meta_mini])
+    stable_inds = ((U_avr >= U_int[mini]) * (U_avr <= U_int[meta_maxi])) + ((U_avr >= U_int[meta_mini]) *(U_avr <= U_int[maxi]))
+    normal_inds = ((U_avr < U_int[mini]) + (U_avr > U_int[maxi]))
+    print(normal_inds)
+    _, fxa_df, final_df = llr.ReadCSVFull(f'{boot_folder}{selected_repeat}/CSV/')
+    V = final_df['V'].values[0]   
+    for Ek in Ep[normal_inds]:
+        temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+        temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+        plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='k')
+    
+    for Ek in Ep[tach_inds]:
+        temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+        temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+        plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='r')
+    for Ek in Ep[stable_inds]:
+        temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+        temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+        plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='b')
+
+
+    plt.xlabel('$l_p$', fontsize = 30)
+    plt.ylabel('$P(l_p)$', fontsize = 30)
+    plt.yticks([],[])
+    plt.show()
+
+
     plt.show()

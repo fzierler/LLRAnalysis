@@ -72,7 +72,7 @@ def find_critical_point(betas, dB, tol,N, final_df, full_obs,folder):
     print('e=',abs(b[1] - b[0]) * V)
     print(abs(b[1] - b[0]))
     print(a[0] - a[2])
-    DG = pd.DataFrame({'Bc':Bc,'lh':abs(b[1] - b[0]) * V,'dE':final_df['dE'][0], 'V':final_df['V'][0], 'Lt':final_df['Lt'][0], 'dP':a[0] - a[2], 'N':N, 'A1':xopt[0],'M1':xopt[1],'S1':xopt[2], 'A2':xopt[3],'M2':xopt[4],'S2':xopt[5], 'Emin':xs_tmp.min(), 'Emax':xs_tmp.max(), 'Epoints':len(xs_tmp)})
+    DG = pd.DataFrame({'Bc':Bc,'lh':abs(b[1] - b[0]) * V,'dE':final_df['dE'][0], 'V':final_df['V'][0], 'Lt':final_df['Lt'][0], 'dP':a[0] - a[2], 'N':N, 'A1':xopt[0],'M1':xopt[1],'S1':xopt[2], 'A2':xopt[3],'M2':xopt[4],'S2':xopt[5], 'Emin':xs_tmp.min(), 'Emax':xs_tmp.max(), 'Epoints':len(xs_tmp)}, index = [0])
     return DG
 
 def ReadDoubleGaussian(betas, dB, tol,N, final_df, fa_df,folder):
@@ -87,6 +87,6 @@ def ReadDoubleGaussian(betas, dB, tol,N, final_df, fa_df,folder):
 def prepare_DG(LLR_folder, n_repeats, betas, dg_tol, dg_db):
     for nr in range(n_repeats):
         folder = f'{LLR_folder}{nr}/CSV/'
-        obs_df = pd.read_csv(f'{folder}{nr}obs.csv')
+        obs_df = pd.read_csv(f'{folder}obs.csv')
         final_df = pd.read_csv(f'{folder}final.csv')
         ReadDoubleGaussian(betas,dg_db, dg_tol,1, final_df, obs_df, folder)

@@ -429,11 +429,33 @@ def calc_prob_distribution(final_df, beta, lnz, xs = np.array([])):
         ys[i] = np.exp(calc_lnrho(final_df, x * (6*final_df['V'].values[0])) + beta*x*(6*final_df['V'].values[0]) - lnz)
     return np.array(xs), np.array(ys)
 
-def prepare_data(LLR_folder, n_repeats, n_replicas, std_files, std_folder, betas, betas_critical):
+def prepare_data(LLR_folder, n_repeats, n_replicas, std_files, std_folder, betas, betas_critical, calc_poly = True):
     std_df, hist_df = standard.CSV(std_files, std_folder)
     for nr in range(n_repeats):
         files = [f'{LLR_folder}{nr}/Rep_{j}/out_0' for j in range(n_replicas)]
         RM, fa_df, final_df = CSV(files , f'{LLR_folder}{nr}/CSV/')
-        comp_dF = ReadObservables(std_df['Beta'].values,final_df,fa_df,f'{LLR_folder}{nr}/CSV/',file = 'comparison.csv')
-        full_dF = ReadObservables(betas,final_df,fa_df,f'{LLR_folder}{nr}/CSV/',file = 'obs.csv')
+        comp_dF = ReadObservables(std_df['Beta'].values,final_df,fa_df,f'{LLR_folder}{nr}/CSV/',file = 'comparison.csv', calc_poly = calc_poly)
+        full_dF = ReadObservables(betas,final_df,fa_df,f'{LLR_folder}{nr}/CSV/',file = 'obs.csv', calc_poly = calc_poly)
         critical_dF = ReadObservables(betas_critical,final_df,fa_df,f'{LLR_folder}{nr}/CSV/',file = 'obs_critical.csv', calc_poly=False)
+
+def half_intervals(originalfolder, reducedfolder, mode='even'):
+    for i in range(20):
+        RM = pd.read_csv(originalfolder + str(i) + '/CSV/RM.csv')
+        FA = pd.read_csv(originalfolder + str(i) + '/CSV/fa.csv')
+        FNL = pd.read_csv(originalfolder + str(i) + '/CSV/final.csv')
+        print(len(np.sort(np.unique(FNL['Ek'].values))[0:-1:2]))
+        if mode=='even': Eks = (np.sort(np.unique(FNL['Ek'].values))[0:-1:2])
+        elif mode=='odd': Eks = (np.sort(np.unique(FNL['Ek'].values))[1::2])
+        elif mode=='mean':  Eks =( (np.sort(np.unique(FNL['Ek'].values))[0:-1:2]) + (np.sort(np.unique(FNL['Ek'].values))[1::2])) /2 
+        RM_red = pd.DataFrame(); FA_red = pd.DataFrame(); FNL_red = pd.DataFrame();
+        dE = Eks[1] - Eks[0]
+        for ek in Eks:    
+            RM_red =pd.concat([RM_red, RM[RM['Ek'] == ek]])
+            FA_red =pd.concat([FA_red, FA[FA['Ek'] == ek]])
+            FNL_red =pd.concat([FNL_red, FNL[FNL['Ek'] == ek]])
+        RM_red['dE'] = np.ones_like(RM_red['Ek'])*dE
+        FA_red['dE'] = np.ones_like(FA_red['Ek'])*dE
+        FNL_red['dE'] = np.ones_like(FNL_red['Ek'])*dE
+        RM_red.to_csv(reducedfolder + str(i) + '/CSV/RM.csv', index = False)
+        FA_red.to_csv(reducedfolder+ str(i) + '/CSV/fa.csv', index = False)
+        FNL_red.to_csv(reducedfolder + str(i) + '/CSV/final.csv', index = False)
