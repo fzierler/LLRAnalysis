@@ -221,5 +221,3 @@ def plot_fxa_polyakovloop_critical(boot_folder,n_repeats,selected_repeat, num_sa
     plt.yticks([],[])
     plt.show()
 
-
-    plt.show()

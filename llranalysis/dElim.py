@@ -6,7 +6,6 @@ import llranalysis.llr as llr
 import llranalysis.error as error
 import llranalysis.standard as standard
 import llranalysis.utils as utils
-import pickle as pkl
 
 def compare_dE_plot_a(boot_folders, n_repeats, blim,ulim,num_samples=200, error_type = 'standard deviation'):
     colours = ['b','g','r','c','m','y','b','g','r','c','m','y','b','g','r','c','m','y']
@@ -100,7 +99,6 @@ def dE_DG_critical_beta(full_folders, reduced_folders, additional_folders, num_r
     plt.errorbar(np.NaN, np.NaN,np.NaN,marker = 'o', color = 'darkorange',label = 'All intervals')
     plt.errorbar(np.NaN, np.NaN,np.NaN,marker= 'o',color= 'b', label = 'Odd intervals')
     plt.legend() 
-    pkl.dump(fig, open('Bc_dE2.pkl', 'wb'))
     plt.show()
 
 
@@ -158,7 +156,6 @@ def dE_DG_critical_plaq(full_folders, reduced_folders, additional_folders, num_r
     plt.errorbar(np.NaN, np.NaN,np.NaN,marker = 'o', color = 'darkorange',label = 'All intervals')
     plt.errorbar(np.NaN, np.NaN,np.NaN,marker= 'o',color= 'b', label = 'Odd intervals')
     plt.legend() 
-    pkl.dump(fig, open('plaq_jump_dE2.pkl', 'wb'))
     plt.show()  
 
 def compare_dE_plot_y(boot_folders, n_repeats, std_files, std_folder, std_key, llr_key, label,num_samples=200, error_type = 'standard deviation', extrema = ''):
