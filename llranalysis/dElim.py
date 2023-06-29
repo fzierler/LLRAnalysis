@@ -8,6 +8,8 @@ import llranalysis.standard as standard
 import llranalysis.utils as utils
 
 def compare_dE_plot_a(boot_folders, n_repeats, blim,ulim,num_samples=200, error_type = 'standard deviation'):
+    #plots a_n against E_n for all dE values
+    # with a focus on the critical region
     colours = ['b','g','r','c','m','y','b','g','r','c','m','y','b','g','r','c','m','y']
     j = 0
     plt.figure(figsize=(10,20))
@@ -39,6 +41,8 @@ def compare_dE_plot_a(boot_folders, n_repeats, blim,ulim,num_samples=200, error_
     plt.show()
 
 def dE_DG_critical_beta(full_folders, reduced_folders, additional_folders, num_repeats,num_samples=200, error_type = 'standard deviation', plt_a=False):
+    #plots the critical beta saved in DG.csv in the limit 
+    #  \Delta_E goes to 0 
     markersize = 10
     fig = plt.figure()
     miny =100.;maxy = 0.
@@ -105,6 +109,8 @@ def dE_DG_critical_beta(full_folders, reduced_folders, additional_folders, num_r
 
 
 def dE_DG_critical_plaq(full_folders, reduced_folders, additional_folders, num_repeats,num_samples=1000, error_type = 'standard deviation'):
+    #plots the plaquette jump saved in DG.csv in the limit 
+    #  \Delta_E goes to 0 
     markersize = 10
     fig = plt.figure()
     dEsq = np.array([])
@@ -159,6 +165,9 @@ def dE_DG_critical_plaq(full_folders, reduced_folders, additional_folders, num_r
     plt.show()  
 
 def compare_dE_plot_y(boot_folders, n_repeats, std_files, std_folder, std_key, llr_key, label,num_samples=200, error_type = 'standard deviation', extrema = ''):
+    #plots an observable in the limit \Delta_E goes to 0 
+    # comparing it to the importance sampling method
+    # if an extrema is defined it also plots this and it's error
     colours = ['b','g','r','c','m','y','b','g','r','c','m','y','b','g','r','c','m','y'] 
     std_df, hist_df = standard.CSV(std_files, std_folder)
     std_bs = std_df['Beta'].values
@@ -212,6 +221,9 @@ def compare_dE_plot_y(boot_folders, n_repeats, std_files, std_folder, std_key, l
     plt.show()
     
 def compare_dE_plot_y_difference(boot_folders, n_repeats, std_files, std_folder, std_key, llr_key, label,num_samples=200, error_type = 'standard deviation'):
+    #plots the difference between the LLR reconstructed observable
+    # and the importance sampling result in 
+    # the limit \Delta_E goes to 0 
     colours = ['b','g','r','c','m','y','b','g','r','c','m','y','b','g','r','c','m','y'] 
     std_df, hist_df = standard.CSV(std_files, std_folder)
     std_bs = std_df['Beta'].values
@@ -241,7 +253,6 @@ def compare_dE_plot_y_difference(boot_folders, n_repeats, std_files, std_folder,
         plt.errorbar(llr_comp_b, c,dc, fmt = colours[i] + 'o', capsize=10, label = 'LLR  $a^4 \Delta_E/ 6\\tilde{V}$' + f'= {2*dE / (6*V):.4f}',zorder=i)
         print(llr_comp_b, dE/(3*V))
         print(c,dc)
-    #plt.errorbar(std_bs, 0.*std_ys, std_ys_err, fmt ='k^', label='Importance sampling', capsize=10)
     plt.ylabel(label, fontsize = 30)
     plt.axhline(0,ls = '--', c = 'k')
     plt.xlabel('$\\beta$', fontsize = 30)
@@ -250,6 +261,7 @@ def compare_dE_plot_y_difference(boot_folders, n_repeats, std_files, std_folder,
     plt.show()
 
 def compare_dE_plot_ymax(boot_folders, n_repeats, llr_key, label,minimum=False,num_samples=200, error_type = 'standard deviation'):
+    #plots the extrema an observables in the limit \Delta_E goes to 0
     colours = ['b','g','r','c','m','y','b','g','r','c','m','y','b','g','r','c','m','y'] 
     dEsq = np.array([])
     bmax = np.array([])
@@ -285,6 +297,7 @@ def compare_dE_plot_ymax(boot_folders, n_repeats, llr_key, label,minimum=False,n
 
 
 def histogram_ymax(boot_folders, n_repeats, llr_key, label,minimum=False):
+    # plots the histogram of the extrema an observable
     colours = ['b','g','r','c','m','y','b','g','r','c','m','y','b','g','r','c','m','y'] 
     dEsq = np.array([])
     bmax = np.array([])

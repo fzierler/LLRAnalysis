@@ -9,6 +9,8 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import matplotlib as mpl
 
 def plot_RM_convergence(boot_folder, n_boots, interval, N_iterations):
+    #plots the variance of repeats of a_n^{(m)} against 
+    # the RM iteration m for a given interval n
     RM_df_names = [boot_folder + str(m) + '/CSV/RM.csv' for m in range(n_boots)]
     figure_folder = boot_folder + 'Figures/'
     RM = pd.read_csv(RM_df_names[0])
@@ -18,7 +20,6 @@ def plot_RM_convergence(boot_folder, n_boots, interval, N_iterations):
     for i, RM_df_name in enumerate(RM_df_names):
         RM = pd.read_csv(RM_df_name)
         Ek = Eks[interval]
-        #plt.plot(-RM[RM['Ek'] == Ek]['a'].values) # axs[0]
         lst_a[i,:] = -RM[RM['Ek'] == Ek]['a'].values
     print(lst_a)
     plt.plot(lst_a.std(axis=0))
@@ -29,6 +30,8 @@ def plot_RM_convergence(boot_folder, n_boots, interval, N_iterations):
     plt.show()
 
 def plot_RM_repeats(boot_folder, n_boots, interval):
+    #plots a_n^{(m)} against the RM iteration m for 
+    # a given interval n for all repeats
     RM_df_names = [boot_folder + str(m) + '/CSV/RM.csv' for m in range(n_boots)]
     figure_folder = boot_folder + 'Figures/'
     RM = pd.read_csv(RM_df_names[0])
@@ -55,6 +58,8 @@ def plot_RM_repeats(boot_folder, n_boots, interval):
     plt.show()
 
 def plot_RM_swaps(boot_folder, repeat, cmap):
+    #plots the values of a_n^{(m)} against the RM iterations
+    # for all intervals  for one repeat
     RM_df = pd.read_csv(boot_folder + str(repeat) + '/CSV/RM.csv')
     RM_df = RM_df.sort_values(by=['Rep','n'], ignore_index = True)
     print('DE/6V:', 2* RM_df['dE'].values[0] / (6*RM_df['V'].values[0]))
@@ -71,6 +76,9 @@ def plot_RM_swaps(boot_folder, repeat, cmap):
     plt.show()
 
 def plot_RM_swaps_fancy(boot_folder, repeat, cmap):
+    #plots the values of a_n^{(m)} against the RM iterations
+    # for all intervals for one repeat without the axis and labels
+    # for t shirts
     plt.figure(figsize=(10,5))
     RM_df = pd.read_csv(boot_folder + str(repeat) + '/CSV/RM.csv')
     RM_df = RM_df.sort_values(by=['Rep','n'], ignore_index = True)
@@ -80,8 +88,6 @@ def plot_RM_swaps_fancy(boot_folder, repeat, cmap):
     for i, n in enumerate(np.unique(RM_df['Rep'])):
         an = -RM_df[RM_df['Rep'] == n]['a'].values
         plt.plot(np.arange(1,len(an)+1), an,lw=1, c= cols(i / len(np.unique(RM_df['Rep']))) )
-        #plt.xlabel('RM iteration $m$') # ,fontsize = 30
-        #plt.ylabel('$a_n^{(m)}$') # , fontsize = 30
         if max_N < len(an) + 1: max_N = len(an)+1 
     plt.ylim([-RM_df['a'].max(), -RM_df['a'].min()])
     plt.xlim(1, max_N)
@@ -89,6 +95,8 @@ def plot_RM_swaps_fancy(boot_folder, repeat, cmap):
     plt.show()
 
 def plot_comparison_histograms(boot_folder, n_repeats, std_files, std_folder,num_samples = 200, error_type= 'standard deviation'):
+    #Compares the probability distribution from the LLR with 
+    # the histogram from the standard importance sampling methods
     std_df, hist_df = standard.CSV(std_files, std_folder)
     colours = ['b','g','r','c','m','y','k','b','g','r','c','m','y','k','b','g','r','c','m','y','k']
     for i, beta in enumerate(std_df['Beta'].values):
@@ -104,9 +112,7 @@ def plot_comparison_histograms(boot_folder, n_repeats, std_files, std_folder,num
         xs = xs.mean(axis = 0)
         ys_err = error.calculate_error_set(ys, num_samples, error_type)
         ys = ys.mean(axis = 0)
-        #plt.plot(xs,(ys + ys_err)* (6*V), 'b--')
         plt.plot(xs,ys* (6*V), 'b-')
-        #plt.plot(xs,(ys - ys_err)* (6*V), 'b--')
         hist_tmp = hist_df[hist_df['Beta'] == beta]['Hist'].values
         bins_tmp = hist_df[hist_df['Beta'] == beta]['Bins'].values
         plt.plot(bins_tmp,hist_tmp, c = 'darkorange', ls = '--') #, lw = 1
@@ -121,6 +127,7 @@ def plot_comparison_histograms(boot_folder, n_repeats, std_files, std_folder,num
 
 
 def fxa_hist(boot_folder, selected_repeat):
+    #plots the histogram of the plaquette for the LLR fixed a iterations
     _, fxa_df, final_df = llr.ReadCSVFull(f'{boot_folder}{selected_repeat}/CSV/')
     V = final_df['V'].values[0]   
     for Ek, a in zip(final_df['Ek'].values,final_df['a'].values):
@@ -133,6 +140,9 @@ def fxa_hist(boot_folder, selected_repeat):
     plt.show()
 
 def plot_DG(LLR_folder, selected_repeat):
+    #Plots the probability distribution from the LLR method 
+    # at the critical point defined in DG.csv,
+    # along with the fit of the probability distribution
     DG = pd.read_csv(f'{LLR_folder}{selected_repeat}/CSV/DG.csv').iloc[0]
     final_df = pd.read_csv(f'{LLR_folder}{selected_repeat}/CSV/final.csv')
     Bc = DG['Bc']
@@ -161,6 +171,8 @@ def plot_DG(LLR_folder, selected_repeat):
 
 
 def prepare_table(boot_folders):
+    #prints a table containing the $\Delta_E values, the volume,
+    # the number of intervals and the minimum and maximum E values
     string_row = ''
     for bf in boot_folders:
         final_df = pd.read_csv(f'{bf}0/CSV/final.csv')

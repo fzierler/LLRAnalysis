@@ -4,22 +4,24 @@ import os.path
 from llranalysis import utils
 import re
 
-def BL(P):
+def BL(P):#Binder cumulant
     return (1 - ( (P.flatten()**4).mean()/ (3 * (((P.flatten()**2).mean())** 2) )  ) ).mean()
 
-def SUS_POLY(P):
+def SUS_POLY(P):#Polyakov loop susceptibility
     return ((((np.abs(P).flatten())**2).mean() ) - (np.abs(P).flatten().mean()**2))
 
-def VEV_POLY(P):
+def VEV_POLY(P):#VEV of the absolute value of the Polyakov loop
     return np.abs(P).flatten().mean()
 
-def VEV_PLAQ(P):
+def VEV_PLAQ(P):#VEV of the average plaquette
     return P.flatten().mean()
 
-def SH_PLAQ(P):
+def SH_PLAQ(P):#Specific heat
     return ((((P.flatten())**2).mean() ) - (P.flatten().mean()**2))
 
 def GetCSV(file, Nb = 1000, M = 1000, plot =True):
+    #Creates dataframes containing the values of the observables and the 
+    # histogram of the observables
     poly, plaq, beta, V, Lt = ReadOutput(file + 'output_file')
     M_poly = num_blocks(poly)
     M_plaq = num_blocks(plaq)
@@ -49,6 +51,7 @@ def GetCSV(file, Nb = 1000, M = 1000, plot =True):
     return DF, HIST_DF
 
 def num_blocks(X):
+    #calculates the number of blocks for bootstrapping
     leng = X.shape[0]
     avr, f2, f = 0., 0., 0.
     avr = np.mean(X)
@@ -79,6 +82,7 @@ def num_blocks(X):
     return(n_block)
 
 def ReadOutput(file):
+    #Reads output of HiRep
     txt_beta = 'beta'
     txt_py = "(Polyakov direction 0 =|FUND_POLYAKOV)"
     txt_v = "Global size is "
@@ -118,6 +122,7 @@ def ReadOutput(file):
     return poly, plaq, beta, V, Lt
 
 def bootstrap( P, M, Nb, con_int =0.68, plot = False, func = np.mean):
+    #Bootstrap error
     P = P.flatten()
     VEV = func(P)
     block_len = int(np.floor(P.shape[0] / M))
@@ -129,6 +134,7 @@ def bootstrap( P, M, Nb, con_int =0.68, plot = False, func = np.mean):
     return P_func.std(ddof=1)
 
 def CSV(files,folder):
+    #checks if CSV files exists, creates them if not, returns result
     exists = os.path.isfile(folder + 'std.csv') and os.path.isfile(folder + 'hist.csv') 
     if exists:
         print('Reading csv files')
@@ -140,6 +146,7 @@ def CSV(files,folder):
     return DF, HIST_DF
 
 def SaveCSVFull(files,folder):
+    #saves CSV files to specified location
     print('Hop')
     DF, HIST_DF = ReadOutputFull(files)
     print(DF)
@@ -148,11 +155,13 @@ def SaveCSVFull(files,folder):
     HIST_DF.to_csv(folder + 'hist.csv', index = False)
     
 def ReadCSVFull(folder):
+    #reads CSV files from specified location
     DF = pd.read_csv(folder + 'std.csv')
     HIST_DF = pd.read_csv(folder + 'hist.csv')
     return DF, HIST_DF
 
 def ReadOutputFull(files):
+    #creates CSV files with all results in
     DF = pd.DataFrame()
     HIST_DF = pd.DataFrame()
     for file in files:

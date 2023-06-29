@@ -7,6 +7,7 @@ import llranalysis.utils as utils
 import llranalysis.standard as standard
 import llranalysis.doubleGaussian as dg
 def ReadRep(file, new_rep, poly):
+    #Reads the HiRep input and outputs the results as csv
     txt_dS0 = "LLR Delta S "
     txt_swap = "New Rep Par S0 = "
     txt_S0 = "LLR S0 Central action"
@@ -156,6 +157,7 @@ def ReadRep(file, new_rep, poly):
     return RM, fixed_a, final
 
 def ReadFull(files, poly=True):
+    #Reads for list of replica HiRep outputs and returns combined results as csv
     fxa_df = pd.DataFrame()
     RM_df = pd.DataFrame()
     final_df = pd.DataFrame()
@@ -182,18 +184,22 @@ def ReadFull(files, poly=True):
     return fxa_df, RM_df, final_df
 
 def SaveCSVFull(files,folder,poly=True):
+    #Saves output of LLR_HB as csv
     FA, RM, FNL = ReadFull(files, poly)
     RM.to_csv(folder + 'RM.csv', index = False)
     FA.to_csv(folder + 'fa.csv', index = False)
     FNL.to_csv(folder + 'final.csv', index = False)
     
 def ReadCSVFull(folder):
+    #Reads csv files containing results of LLR_HB
     RM = pd.read_csv(folder + 'RM.csv')
     FA = pd.read_csv(folder + 'fa.csv')
     FNL = pd.read_csv(folder + 'final.csv')
     return RM, FA, FNL
 
 def CSV(files,folder, poly=True):
+    #Checks whether csv files for LLR_HB exists if it doesn't it creates them
+    #returns the csv files from LLR_HB
     exists = os.path.isfile(folder + 'RM.csv') and os.path.isfile(folder + 'fa.csv') and os.path.isfile(folder + 'final.csv')
     if exists:
         print('Reading csv files')
@@ -205,6 +211,7 @@ def CSV(files,folder, poly=True):
     return RM, FA, FNL
 
 def ReadObservables(betas, final_df, fa_df, folder, file = 'obs.csv', calc_poly = True):
+    #Reads observables csv file if they exist, creates them if not, returns result
     print('Obs_DF')
     file_loc = folder + file
     exists = os.path.isfile(file_loc) 
@@ -219,6 +226,9 @@ def ReadObservables(betas, final_df, fa_df, folder, file = 'obs.csv', calc_poly 
     return obs_DF
 
 def calc_observables_full(betas,final_df,fa_df, calc_poly = True):
+    #calculates the average plaquette, specific heat,
+    #binder cumulant and (if calc_poly = True) 
+    #calculates the polyakov loop and its susceptibility
     Eks = final_df['Ek'].values
     dE = (Eks[1] - Eks[0]) 
     V = final_df['V'].values[0]
@@ -253,6 +263,7 @@ def calc_observables_full(betas,final_df,fa_df, calc_poly = True):
     return pd.DataFrame(data = {'b':betas,'u':E,'Cu':SH,'Bv':binder, 'lp':poly, 'Xlp':Xlp,'Blp':Blp, 'V':V * np.ones(len(poly)), 'Lt':Lt * np.ones(len(poly))})
 
 def calc_lnZ(Eks, aks, beta, rmpf = False):
+    #calculates the log of the partition function at a coupling beta
     pi_exp = 0.
     full_exp = mp.mpf(0)
     dE = Eks[1] - Eks[0]
@@ -274,6 +285,7 @@ def calc_lnZ(Eks, aks, beta, rmpf = False):
     return ln_Z
 
 def calc_lnrho(final_df, E):
+    #calculates the log of the density of states at an energy E
     pi_exp = 0.
     ln_rho = 0.
     dE = final_df['dE'][0]
@@ -288,6 +300,7 @@ def calc_lnrho(final_df, E):
     return ln_rho
 
 def calc_E(Eks, aks, beta):
+    #calculates the reconstructed energy at a coupling beta
     pi_exp = 0.
     full_exp = mp.mpf(0)
     dE = Eks[1] - Eks[0]
@@ -310,6 +323,7 @@ def calc_E(Eks, aks, beta):
     return E/Z
 
 def calc_E2(Eks, aks, beta):
+    #calculates the reconstructed energy^2 at a coupling beta
     pi_exp = - calc_lnZ(Eks, aks, beta, rmpf = True)
     full_exp = mp.mpf(0)
     dE = Eks[1] - Eks[0]
@@ -329,6 +343,7 @@ def calc_E2(Eks, aks, beta):
     return E2
 
 def calc_E4(Eks, aks, beta):
+    #calculates the reconstructed energy^4 at a coupling beta
     pi_exp = - calc_lnZ(Eks, aks, beta, rmpf = True)
     full_exp = mp.mpf(0)
     dE = Eks[1] - Eks[0]
@@ -361,6 +376,8 @@ def calc_E4(Eks, aks, beta):
     return E4
 
 def calc_EN(Eks, aks, beta, N):
+    #calculates the reconstructed energy^N at a coupling beta
+    #may not be stable for larger N values
     pi_exp = - calc_lnZ(Eks, aks, beta, rmpf = True)
     full_exp = mp.mpf(0)
     dE = Eks[1] - Eks[0]
@@ -387,6 +404,8 @@ def calc_EN(Eks, aks, beta, N):
     return EN
 
 def calc_fxa_lnZ(fxa_df, final_df, beta):
+    #calculates the log of the partition function from the 
+    # fixed a iterations
     dE = final_df['dE'][0]
     final_df = final_df.sort_values(by=['Ek'], ignore_index=True)
     Ek = final_df['Ek'].values[0]; a = final_df['a'].values[0];
@@ -404,6 +423,8 @@ def calc_fxa_lnZ(fxa_df, final_df, beta):
     return ln_Z
 
 def calc_fxa_obs(fxa_df, final_df, beta, obs, n, lnz):
+    #calculates the reconstructed observables from the 
+    # fixed a iterations
     dE = final_df['dE'][0]
     final_df = final_df.sort_values(by=['Ek'], ignore_index=True)
     B = 0.  
@@ -421,6 +442,7 @@ def calc_fxa_obs(fxa_df, final_df, beta, obs, n, lnz):
     return B
 
 def calc_prob_distribution(final_df, beta, lnz, xs = np.array([])):
+    #calculates the energies probability distribution
     if(xs.shape[0] == 0):
         xs = np.linspace(np.min(final_df['Ek'].values + final_df['dE'].values) / (6*final_df['V'].values[0]) , np.max(final_df['Ek'].values) / (6*final_df['V'].values[0]), 1000)
         #print('Here')
@@ -430,6 +452,7 @@ def calc_prob_distribution(final_df, beta, lnz, xs = np.array([])):
     return np.array(xs), np.array(ys)
 
 def prepare_data(LLR_folder, n_repeats, n_replicas, std_files, std_folder, betas, betas_critical, calc_poly = True):
+    #calculates all relevant csv files
     std_df, hist_df = standard.CSV(std_files, std_folder)
     for nr in range(n_repeats):
         files = [f'{LLR_folder}{nr}/Rep_{j}/out_0' for j in range(n_replicas)]
@@ -439,6 +462,8 @@ def prepare_data(LLR_folder, n_repeats, n_replicas, std_files, std_folder, betas
         critical_dF = ReadObservables(betas_critical,final_df,fa_df,f'{LLR_folder}{nr}/CSV/',file = 'obs_critical.csv', calc_poly=False)
 
 def half_intervals(originalfolder, reducedfolder, mode='even'):
+    #creates csv files containing only half the intervals of originalfolder
+    #saves into reducedfolder
     for i in range(20):
         RM = pd.read_csv(originalfolder + str(i) + '/CSV/RM.csv')
         FA = pd.read_csv(originalfolder + str(i) + '/CSV/fa.csv')

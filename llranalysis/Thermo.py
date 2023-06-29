@@ -11,6 +11,8 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 import matplotlib as mpl
 
 def find_critical_region(E,b):
+    #Finds the indices of the critical region
+    # (critical region defined as the non-invertibility in E_n(a_n))
     cr = [len(InterpolatedUnivariateSpline(E,b - b[i]).roots())>2 for i in range(len(b))]
     mini = min(np.nonzero(cr)[0]); maxi= max(np.nonzero(cr)[0])
     print(InterpolatedUnivariateSpline(E,b - b[mini]).roots())
@@ -32,6 +34,8 @@ def find_critical_region(E,b):
     return mini,meta_mini, midi,meta_maxi, maxi
 
 def thermodynamics(boot_folder,n_repeats, Es):
+    #Calculates the entropy, micro-canonical temperature,
+    # free energy and internal energy of the system
     logrho0 = 0
     S = np.array([]); F = np.array([]); U = np.array([]); T = np.array([]); style = np.array([]); order = np.array([]);
     for i in range(n_repeats):
@@ -51,6 +55,7 @@ def thermodynamics(boot_folder,n_repeats, Es):
 
 
 def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard deviation',cmap = 'rainbow'):
+    #calculates the reduced free energy and plots the swallow tail plot
     markersize = 5
     final_df = pd.read_csv(f'{boot_folder}0/CSV/final.csv')
     V = final_df['V'][0]; dE = final_df['dE'][0]; 
@@ -61,7 +66,6 @@ def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard de
     S_int = S.mean(axis=0); T_int = T.mean(axis=0); F_int = F.mean(axis=0); U_int = U.mean(axis=0);
     S_int_err = error.calculate_error_set(S,num_samples,error_type); T_int_err = error.calculate_error_set(T,num_samples,error_type);
     F_int_err = error.calculate_error_set(F,num_samples,error_type); U_int_err = error.calculate_error_set(U,num_samples,error_type);
-    #S_int_err = S.std(axis=0, ddof=1); T_int_err = T.std(axis=0, ddof=1); F_int_err = F.std(axis=0, ddof=1); U_int_err = U.std(axis=0, ddof=1);
     F_red_int_avr = (F + Sigma*T).mean(axis=0);
     F_red_int_err = error.calculate_error_set((F + Sigma*T),num_samples,error_type);
     
@@ -74,7 +78,6 @@ def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard de
     S_avr = S.mean(axis=0); T_avr = T.mean(axis=0); F_avr = F.mean(axis=0); U_avr = U.mean(axis=0);
     S_err = error.calculate_error_set(S,num_samples,error_type); T_err = error.calculate_error_set(T,num_samples,error_type);
     F_err = error.calculate_error_set(F,num_samples,error_type); U_err = error.calculate_error_set(U,num_samples,error_type);
-    #S_err = S.std(axis=0, ddof=1); T_err = T.std(axis=0, ddof=1); F_err = F.std(axis=0, ddof=1); U_err = U.std(axis=0, ddof=1);
     F_red_avr = (F + Sigma*T).mean(axis=0) 
     F_red_err = error.calculate_error_set((F + Sigma*T),num_samples,error_type);
 
@@ -88,8 +91,6 @@ def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard de
     norm = colours.Normalize(vmin=0, vmax=inds.sum() + 2, clip=True)
     mapper = cm.ScalarMappable(norm=norm, cmap='gist_heat')
     cols = cmap
-    #cols = mpl.colormaps[cmap]
-    #cs = np.array([(mapper.to_rgba(x)) for x in np.linspace(0,inds.sum(), num=inds.sum())])
     for c, (x, x_err, y, y_err) in enumerate(zip(T_avr[inds],T_err[inds], F_red_avr[inds], F_red_err[inds])):
         plt.errorbar(x,y ,xerr=x_err, yerr= y_err, color = cols(c / (len(T_avr[inds])-1)), marker = 'o', ms = markersize)
     plt.xlabel('t', fontsize=30)
@@ -115,6 +116,9 @@ def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard de
     plt.show()
 
 def plot_ak_dist_potential(boot_folder, n_repeats, beta, ulim, blim,num_samples=200, error_type = 'standard deviation'):
+    #at a given beta plots a_n against u_p,
+    # the probability distribution at this coupling
+    # and the effective potential
     print(beta)
     xs = np.array([]);ys = np.array([]); a = np.array([]); Eks = np.array([]);
     for nr in range(n_repeats):
@@ -131,8 +135,6 @@ def plot_ak_dist_potential(boot_folder, n_repeats, beta, ulim, blim,num_samples=
     fig, axs = plt.subplots(3,1, figsize=(10,18), gridspec_kw={'height_ratios': [5, 5,5]})
     Emax = ulim[1]
     Emin = ulim[0]
-    #lnz = llr.calc_lnZ(final_df['Ek'].values, final_df['a'].values, beta)
-    #xs , ys = llr.prob_distribution(final_df, beta, lnz)
     spl = InterpolatedUnivariateSpline(Eks,a + beta).roots()
     axs[0].clear()
     axs[0].errorbar((Eks/ (6*V)), -a, a_err)
@@ -141,7 +143,6 @@ def plot_ak_dist_potential(boot_folder, n_repeats, beta, ulim, blim,num_samples=
     axs[0].set_ylim(blim[0],blim[1])
     axs[0].set_xlim(Emin,Emax)
     axs[0].set_ylabel('$a_n$', fontsize=30)
-    #axs[0].text((106200/ (6*V)), beta, "$\\beta_c$",horizontalalignment='left',verticalalignment='top',fontsize=30)
     axs[0].set_xticks([])
     axs[1].clear()
     axs[1].set_ylabel('$P_{\\beta_c}(u_p)$', fontsize=30)
@@ -160,7 +161,6 @@ def plot_ak_dist_potential(boot_folder, n_repeats, beta, ulim, blim,num_samples=
     ymax = f(spl)
     for s,ym in zip(spl,ymax): axs[2].plot([s/ (6*V),s/ (6*V)],[100,ym],ls='--',c='m')
     axs[2].set_yticklabels([])
-    #axs[2].set_xticklabels()
     axs[2].set_ylim(6.5,8.5)
     axs[2].set_xlim(Emin, Emax)
     plt.tight_layout()
@@ -169,6 +169,8 @@ def plot_ak_dist_potential(boot_folder, n_repeats, beta, ulim, blim,num_samples=
 
 
 def plot_fxa_polyakovloop_critical(boot_folder,n_repeats,selected_repeat, num_samples=200, error_type = 'standard deviation'):
+    #plots the fixed a distribution of polyakov loop seperately for each interval
+    #the colours represent red: unstable, blue: metastable and black: stable
     final_df = pd.read_csv(f'{boot_folder}0/CSV/final.csv')
     V = final_df['V'][0]; dE = final_df['dE'][0]; 
     Ep = np.unique(final_df['Ek'])

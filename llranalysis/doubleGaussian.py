@@ -5,16 +5,19 @@ import pandas as pd
 import os
 
 def double_Gaussian_velocity(x, amp1, mn1, std1,amp2, mn2, std2):
+    #calculates the gradient of the double Gaussian
     G1 = np.exp(-((x-mn1)**2.)/(2 * (std1**2.)))  * amp1
     G2 = np.exp(-((x-mn2)**2.)/(2 * (std2**2.))) * amp2
     return G1*((mn1 - x) / std1**2.) + G2*((mn2 - x) / std2**2.)
 
 def double_Gaussian_acceleration(x, amp1, mn1, std1,amp2, mn2, std2):
+    #calculates the second derivate of the double Gaussian
     G1 = np.exp(-((x-mn1)**2.)/(2 * (std1**2.)))  * amp1
     G2 = np.exp(-((x-mn2)**2.)/(2 * (std2**2.))) * amp2
     return (G1/ std1**2.)*(((mn1 - x)/ std1)**2. -1. ) +  (G2/ std2**2.)*(((mn2 - x)/ std2)**2. -1. )
 
 def double_Gaussian_find_peaks(x, amp1, mn1, std1,amp2, mn2, std2):
+    #finds peaks of double Gaussian
     G1 = np.exp(-((x-mn1)**2.)/(2 * (std1**2.)))  * amp1
     G2 = np.exp(-((x-mn2)**2.)/(2 * (std2**2.))) * amp2
     y_vel = G1*((mn1 - x) / std1**2.) + G2*((mn2 - x) / std2**2.)
@@ -27,11 +30,16 @@ def double_Gaussian_find_peaks(x, amp1, mn1, std1,amp2, mn2, std2):
     return x, y
 
 def double_Gaussian(x, amp1, mn1, std1,amp2, mn2, std2):
+    #defines a double Gaussian distribution
     G1 = np.exp(-((x-mn1)**2.)/(2 * (std1**2.)))  * amp1
     G2 = np.exp(-((x-mn2)**2.)/(2 * (std2**2.))) * amp2
     return G1 + G2
 
 def find_critical_point(betas, dB, tol,N, final_df, full_obs,folder):
+    #uses bisection method to find the critical beta 
+    # where the peaks of the double Gaussian fitted 
+    # to the probability distribution from the LLR method 
+    # are equal height
     Bc = full_obs['b'].values[np.argmax(full_obs['Cu'])]
     print('Fitting double gaussian')
     lnz = llr.calc_lnZ(final_df['Ek'].values, final_df['a'].values, Bc)
@@ -76,6 +84,8 @@ def find_critical_point(betas, dB, tol,N, final_df, full_obs,folder):
     return DG
 
 def ReadDoubleGaussian(betas, dB, tol,N, final_df, fa_df,folder):
+    #Reads the dataframe containing double gaussian information
+    # at the critical point, if the dataframe doesn't exist it creates it
     DG_csv = folder + 'DG.csv'
     if os.path.isfile(DG_csv):
         DG = pd.read_csv(DG_csv)
@@ -85,6 +95,7 @@ def ReadDoubleGaussian(betas, dB, tol,N, final_df, fa_df,folder):
     return DG
 
 def prepare_DG(LLR_folder, n_repeats, betas, dg_tol, dg_db):
+    #Calculates the dataframes for the double gaussian information for all the repeats
     for nr in range(n_repeats):
         folder = f'{LLR_folder}{nr}/CSV/'
         obs_df = pd.read_csv(f'{folder}obs.csv')
