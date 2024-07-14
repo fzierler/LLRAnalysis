@@ -113,7 +113,7 @@ def free_energy(boot_folder,n_repeats,num_samples=200, error_type = 'standard de
     axsins.set_ylabel('$a_n$', fontsize=30)
     for c, (x, y, y_err) in enumerate(zip((6*V - U_avr[inds])/(6*V),ak[inds],ak_err[inds])):
         axsins.errorbar(x , y,y_err, color = cols(c/(len(ak[inds])-1)), marker = 'o',ms = markersize)
-    plt.show()
+    return fig
 
 def plot_ak_dist_potential(boot_folder, n_repeats, beta, ulim, blim,num_samples=200, error_type = 'standard deviation'):
     #at a given beta plots a_n against u_p,
@@ -163,12 +163,12 @@ def plot_ak_dist_potential(boot_folder, n_repeats, beta, ulim, blim,num_samples=
     axs[2].set_yticklabels([])
     axs[2].set_ylim(6.5,8.5)
     axs[2].set_xlim(Emin, Emax)
-    plt.tight_layout()
     axs[2].plot(xs  ,-np.log(ys))
-    plt.show()
+    return fig
 
 
 def plot_fxa_polyakovloop_critical(boot_folder,n_repeats,selected_repeat, num_samples=200, error_type = 'standard deviation'):
+    fig = plt.figure()
     #plots the fixed a distribution of polyakov loop seperately for each interval
     #the colours represent red: unstable, blue: metastable and black: stable
     final_df = pd.read_csv(f'{boot_folder}0/CSV/final.csv')
@@ -221,5 +221,5 @@ def plot_fxa_polyakovloop_critical(boot_folder,n_repeats,selected_repeat, num_sa
     plt.xlabel('$l_p$', fontsize = 30)
     plt.ylabel('$P(l_p)$', fontsize = 30)
     plt.yticks([],[])
-    plt.show()
+    return fig
 

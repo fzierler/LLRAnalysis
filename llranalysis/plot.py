@@ -27,7 +27,7 @@ def plot_RM_convergence(boot_folder, n_boots, interval, N_iterations):
     plt.ylabel('$\sigma_{a_n^{(m)}}$') #axs[0].set_
     print('Ek/6V:', Ek / (6*RM['V'].values[0]))
     print('DE/6V:', 2* RM['dE'].values[0] / (6*RM['V'].values[0]))
-    plt.show()
+    return fig
 
 def plot_RM_repeats(boot_folder, n_boots, interval):
     #plots a_n^{(m)} against the RM iteration m for 
@@ -55,9 +55,10 @@ def plot_RM_repeats(boot_folder, n_boots, interval):
     axsins.tick_params(axis='both', which='major', labelsize=15)
     axsins.tick_params(axis='both', which='minor', labelsize=15)
     axsins.locator_params(axis="y", nbins=5)
-    plt.show()
+    return fig
 
 def plot_RM_swaps(boot_folder, repeat, cmap):
+    fig = plt.figure()
     #plots the values of a_n^{(m)} against the RM iterations
     # for all intervals  for one repeat
     RM_df = pd.read_csv(boot_folder + str(repeat) + '/CSV/RM.csv')
@@ -73,13 +74,13 @@ def plot_RM_swaps(boot_folder, repeat, cmap):
         if max_N < len(an) + 1: max_N = len(an)+1 
     plt.ylim([-RM_df['a'].max(), -RM_df['a'].min()])
     plt.xlim(1, max_N)
-    plt.show()
+    return fig
 
 def plot_RM_swaps_fancy(boot_folder, repeat, cmap):
     #plots the values of a_n^{(m)} against the RM iterations
     # for all intervals for one repeat without the axis and labels
     # for t shirts
-    plt.figure(figsize=(10,5))
+    fig = plt.figure(figsize=(10,5))
     RM_df = pd.read_csv(boot_folder + str(repeat) + '/CSV/RM.csv')
     RM_df = RM_df.sort_values(by=['Rep','n'], ignore_index = True)
     print('DE/6V:', 2* RM_df['dE'].values[0] / (6*RM_df['V'].values[0]))
@@ -92,9 +93,10 @@ def plot_RM_swaps_fancy(boot_folder, repeat, cmap):
     plt.ylim([-RM_df['a'].max(), -RM_df['a'].min()])
     plt.xlim(1, max_N)
     plt.axis('off')
-    plt.show()
+    return fig
 
 def plot_comparison_histograms(boot_folder, n_repeats, std_files, std_folder,num_samples = 200, error_type= 'standard deviation'):
+    fig = plt.figure()
     #Compares the probability distribution from the LLR with 
     # the histogram from the standard importance sampling methods
     std_df, hist_df = standard.CSV(std_files, std_folder)
@@ -123,10 +125,11 @@ def plot_comparison_histograms(boot_folder, n_repeats, std_files, std_folder,num
     plt.legend() 
     plt.ylabel('$P_{\\beta}(u_p)$' )
     plt.xlabel('$u_p$')
-    plt.show()
+    return fig
 
 
 def fxa_hist(boot_folder, selected_repeat):
+    fig = plt.figure()
     #plots the histogram of the plaquette for the LLR fixed a iterations
     _, fxa_df, final_df = llr.ReadCSVFull(f'{boot_folder}{selected_repeat}/CSV/')
     V = final_df['V'].values[0]   
@@ -137,9 +140,10 @@ def fxa_hist(boot_folder, selected_repeat):
     plt.xlabel('$u_p$', fontsize = 30)
     plt.ylabel('$P(u_p)$', fontsize = 30)
     plt.yticks([],[])
-    plt.show()
+    return fig
 
 def plot_DG(LLR_folder, selected_repeat):
+    fig = plt.figure()
     #Plots the probability distribution from the LLR method 
     # at the critical point defined in DG.csv,
     # along with the fit of the probability distribution
@@ -167,7 +171,7 @@ def plot_DG(LLR_folder, selected_repeat):
     N = 1
     plt.xlim([np.min(x[y > ((0.1 * (max(y) / N)))]),np.max(x[y > ((0.1 * (max(y) / N)))])])
     plt.legend(fontsize=20)
-    plt.show()
+    return fig
 
 
 def prepare_table(boot_folders):
