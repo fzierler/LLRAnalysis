@@ -141,6 +141,7 @@ def CSV(files,folder):
         DF, HIST_DF = ReadCSVFull(folder)
     else:
         print('No CSV files creating them now')
+        os.makedirs(folder, exist_ok=True)
         SaveCSVFull(files,folder)
         DF, HIST_DF = ReadCSVFull(folder)
     return DF, HIST_DF

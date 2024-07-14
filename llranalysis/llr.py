@@ -205,6 +205,7 @@ def CSV(files,folder, poly=True):
         print('Reading csv files')
         RM, FA, FNL = ReadCSVFull(folder)
     else:
+        os.makedirs(folder, exist_ok=True)
         print('No CSV files creating them now')
         SaveCSVFull(files,folder,poly)
         RM, FA, FNL = ReadCSVFull(folder)
@@ -212,7 +213,6 @@ def CSV(files,folder, poly=True):
 
 def ReadObservables(betas, final_df, fa_df, folder, file = 'obs.csv', calc_poly = True):
     #Reads observables csv file if they exist, creates them if not, returns result
-    print('Obs_DF')
     file_loc = folder + file
     exists = os.path.isfile(file_loc) 
     if exists:
@@ -366,13 +366,9 @@ def calc_E4(Eks, aks, beta):
                       + mp.exp(pi_exp + (beta* (Ek - (dE/2.) ) ) + (A*dE / 2.) + mp.log(abs(N)) + mp.log(mp.cosh(T))+  mp.log(mp.sinh(T))  - 5 * mp.log(np.abs(A))) * np.sign(A) * np.sign(N))
                 print(E4_k)
                 return np.NaN
-                             #((Ek ** )*((dE/2)**2)/(2 * (A**2.))) 
         else:
             print('A=0, beta =',beta,', a=', a)
-            #full_exp = mp.exp(pi_exp - (Ek*a) + a*(dE/2.))
-            #E2 += 2 * full_exp * (((Ek**2.) * dE/2.) + ((1./3.) * ((dE/2.) ** 3.)))
         pi_exp += a*dE
-    #print(E / Z)
     return E4
 
 def calc_EN(Eks, aks, beta, N):
@@ -432,20 +428,17 @@ def calc_fxa_obs(fxa_df, final_df, beta, obs, n, lnz):
         S = fxa_df[fxa_df['Ek'].values == Ek]['S'].values 
         P = fxa_df[fxa_df['Ek'].values == Ek][obs].values ** n
         ns =  fxa_df[fxa_df['Ek'].values == Ek]['n'].values 
-        #plt.hist(S, histtype='step', bins = 100)
+
         ln_rhok = calc_lnrho(final_df, Ek)
         VEV_exp = (beta*S + a*(S - Ek) + ln_rhok - lnz)
         B += np.mean(P * dE * np.exp(VEV_exp))
-        #plt.plot(Ek, np.mean(dE * np.exp(VEV_exp)) , 'kx')
-    #plt.show()
-    #print(obs,'^',n,':', B)
+
     return B
 
 def calc_prob_distribution(final_df, beta, lnz, xs = np.array([])):
     #calculates the energies probability distribution
     if(xs.shape[0] == 0):
         xs = np.linspace(np.min(final_df['Ek'].values + final_df['dE'].values) / (6*final_df['V'].values[0]) , np.max(final_df['Ek'].values) / (6*final_df['V'].values[0]), 1000)
-        #print('Here')
     ys = np.zeros(xs.size)
     for x, i in zip(xs,range(len(xs))):
         ys[i] = np.exp(calc_lnrho(final_df, x * (6*final_df['V'].values[0])) + beta*x*(6*final_df['V'].values[0]) - lnz)
