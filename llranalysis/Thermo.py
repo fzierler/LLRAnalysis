@@ -11,27 +11,17 @@ from scipy.interpolate import InterpolatedUnivariateSpline
 import matplotlib as mpl
 
 def find_critical_region(E,b):
-    #Finds the indices of the critical region
-    # (critical region defined as the non-invertibility in E_n(a_n))
-    cr = [len(InterpolatedUnivariateSpline(E,b - b[i]).roots())>2 for i in range(len(b))]
+    cr = [len(InterpolatedUnivariateSpline(E,b - b[i]).roots())>=2 for i in range(len(b))]
     mini = min(np.nonzero(cr)[0]); maxi= max(np.nonzero(cr)[0])
-    print(InterpolatedUnivariateSpline(E,b - b[mini]).roots())
-    print(InterpolatedUnivariateSpline(E,b - b[maxi]).roots())
-    print(b[maxi], b[mini])
-    difference = E.max()
-    midi = 0
-    for ind in np.nonzero(cr)[0]:
-        spl = InterpolatedUnivariateSpline(E,b - b[ind]).roots()
-        if len(spl) >=3:
-            if (difference > abs(spl[0] + spl[2] - 2*spl[1])):
-                midi = ind    
-                difference = abs(spl[0] + spl[2] - 2*spl[1])
-    
+    midb = (b[mini] + b[maxi]) / 2. 
+    spl = InterpolatedUnivariateSpline(E,b - midb).roots()
+    midi  = np.argmin(abs(E - np.median(spl)))
     meta_mini = np.argmax(b*(E > E[midi]))
     meta_maxi = np.argmin(b + b.max()*(E > E[midi]))
-    [mini,midi,maxi] = np.sort(np.array([(mini,b[mini]), (midi,b[midi]),(maxi,b[maxi])],dtype=[('ind',int),('temp',float)]), order='temp')['ind']
-    [meta_mini,meta_maxi] = np.sort(np.array([(meta_mini,b[meta_mini]), (meta_maxi,b[meta_maxi])],dtype=[('ind',int),('temp',float)]), order='temp')['ind']   
+    [maxi,midi,mini] = np.sort(np.array([(mini,E[mini]), (midi,E[midi]),(maxi,E[maxi])],dtype=[('ind',int),('temp',float)]), order='temp')['ind']
+    [meta_mini,meta_maxi] = np.sort(np.array([(meta_mini,E[meta_mini]), (meta_maxi,E[meta_maxi])],dtype=[('ind',int),('temp',float)]), order='temp')['ind']   
     return mini,meta_mini, midi,meta_maxi, maxi
+
 
 def thermodynamics(boot_folder,n_repeats, Es):
     #Calculates the entropy, micro-canonical temperature,
@@ -167,7 +157,7 @@ def plot_ak_dist_potential(boot_folder, n_repeats, beta, ulim, blim,num_samples=
     return fig
 
 
-def plot_fxa_polyakovloop_critical(boot_folder,n_repeats,selected_repeat, num_samples=200, error_type = 'standard deviation'):
+def plot_fxa_polyakovloop_critical(boot_folder,n_repeats,selected_repeat, plt_all = True,num_samples=200, error_type = 'standard deviation'):
     fig = plt.figure()
     #plots the fixed a distribution of polyakov loop seperately for each interval
     #the colours represent red: unstable, blue: metastable and black: stable
@@ -202,24 +192,100 @@ def plot_fxa_polyakovloop_critical(boot_folder,n_repeats,selected_repeat, num_sa
     normal_inds = ((U_avr < U_int[mini]) + (U_avr > U_int[maxi]))
     print(normal_inds)
     _, fxa_df, final_df = llr.ReadCSVFull(f'{boot_folder}{selected_repeat}/CSV/')
-    V = final_df['V'].values[0]   
-    for Ek in Ep[normal_inds]:
+    V = final_df['V'].values[0]  
+    if plt_all: 
+        for Ek in Ep[normal_inds]:
+            temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+            temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+            plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='k')
+    
+        for Ek in Ep[tach_inds]:
+            temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+            temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+            plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='r')
+        for Ek in Ep[stable_inds]:
+            temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+            temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+            plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='b')
+    else:
+        Ek = Ep[normal_inds][0]
         temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
         temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
         plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='k')
-    
-    for Ek in Ep[tach_inds]:
+        Ek = Ep[normal_inds][-1]
         temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
         temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
-        plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='r')
-    for Ek in Ep[stable_inds]:
-        temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
-        temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
-        plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='b')
+        plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='k')
+
+        #Ek = Ep[tach_inds][0]
+        #temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+        #temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+        #plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='r')
+        #Ek = Ep[tach_inds][-1]
+        #temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+        #temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+        #plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='r')
+
+        #Ek = Ep[stable_inds][0]
+        #temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+        #temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+        #plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='b')
+        #Ek = Ep[stable_inds][-1]
+        #temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+        #temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+        #plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='b')
+        for Ek in Ep[tach_inds]:
+            temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+            temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+            plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='r')
+        for Ek in Ep[stable_inds]:
+            temp_fxa_df = fxa_df[fxa_df['Ek'].values == Ek]
+            temp_fxa_df = temp_fxa_df[temp_fxa_df['S'].values != 0]
+            plt.hist(temp_fxa_df['Poly'].values, histtype='step', bins = 100, density = True, color='b')
 
 
-    plt.xlabel('$l_p$', fontsize = 30)
-    plt.ylabel('$P(l_p)$', fontsize = 30)
+    plt.xlabel('$|l_p|$', fontsize = 30)
+    plt.ylabel('$P(|l_p|)$', fontsize = 30)
     plt.yticks([],[])
     return fig
 
+def free_energy_difference(boot_folder,n_repeats,num_samples=200, error_type = 'standard deviation',cmap = 'rainbow'):
+    markersize = 5
+    final_df = pd.read_csv(f'{boot_folder}0/CSV/final.csv')
+    V = final_df['V'][0]; dE = final_df['dE'][0]; 
+    Ep = np.unique(final_df['Ek'])
+    S,T,F,U = thermodynamics(boot_folder,n_repeats, np.linspace(Ep.min(), Ep.max(), 100))
+    F /= V
+    Sigma = S.mean() / V
+    S_int = S.mean(axis=0); T_int = T.mean(axis=0); F_int = F.mean(axis=0); U_int = U.mean(axis=0);
+    S_int_err = error.calculate_error_set(S,num_samples,error_type); T_int_err = error.calculate_error_set(T,num_samples,error_type);
+    F_int_err = error.calculate_error_set(F,num_samples,error_type); U_int_err = error.calculate_error_set(U,num_samples,error_type);
+    #S_int_err = S.std(axis=0, ddof=1); T_int_err = T.std(axis=0, ddof=1); F_int_err = F.std(axis=0, ddof=1); U_int_err = U.std(axis=0, ddof=1);
+    F_red_int_avr = (F + Sigma*T).mean(axis=0);
+    F_red_int_err = error.calculate_error_set((F + Sigma*T),num_samples,error_type);
+    
+    mini,meta_mini, midi,meta_maxi, maxi = find_critical_region(6*V - U_int,T_int)    
+    
+    tach_inds = (U_int >= U_int[meta_maxi]) * (U_int <= U_int[meta_mini])
+    conf_inds = ((U_int >= U_int[mini]) * (U_int <= U_int[meta_maxi])) 
+    deconf_inds = ((U_int >= U_int[meta_mini]) *(U_int <= U_int[maxi]))
+    critical_inds = tach_inds + conf_inds + deconf_inds    
+
+    T_cri = np.linspace(min(T_int[critical_inds]), max(T_int[critical_inds]), 20)
+    F_unstable = np.interp(T_cri, T_int[tach_inds], F_red_int_avr[tach_inds]);
+    F_conf = np.interp(T_cri, T_int[conf_inds][::-1], F_red_int_avr[conf_inds][::-1]);
+    F_deconf = np.interp(T_cri, T_int[deconf_inds][::-1], F_red_int_avr[deconf_inds][::-1]);
+    P_un_co = (F_conf - F_unstable)*V
+    P_un_de = (F_deconf - F_unstable)*V
+
+    fig, ax = plt.subplots(figsize=(10,10))
+    #plt.plot(T_int[:maxi+1],F_red_int_avr[:maxi+1] ,'k-'); plt.plot(T_int[mini:],F_red_int_avr[mini:],'k-')
+    plt.plot(T_cri,P_un_co,'b-');
+    plt.plot(T_cri,P_un_de,'r-');
+    ymax = max(P_un_co.max(),P_un_de.max())
+    ymin = min(P_un_co.min(),P_un_de.min())
+
+    plt.ylim([ymin,ymax])
+    #plt.xlim([T_cri[mini+1],T_cri[maxi - 3]])
+    plt.locator_params(axis="x", nbins=5)
+    plt.show()
