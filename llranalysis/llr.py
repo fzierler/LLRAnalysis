@@ -169,9 +169,9 @@ def ReadFull(files, poly=True):
             fxa_df = fxa_tmp.copy()
             final_df = final_tmp.copy()
         else:       
-            RM_df = RM_df.append(RM_tmp, ignore_index=True)
-            fxa_df= fxa_df.append(fxa_tmp, ignore_index=True)
-            final_df = final_df.append(final_tmp, ignore_index=True)
+            RM_df = RM_df.concat(RM_tmp, ignore_index=True)
+            fxa_df= fxa_df.concat(fxa_tmp, ignore_index=True)
+            final_df = final_df.concat(final_tmp, ignore_index=True)
     RM_df = RM_df.sort_values(by=['Ek','n'], ignore_index = True)
     fxa_df = fxa_df.sort_values(by=['Ek','Rep'], ignore_index = True)
     final_df = final_df.sort_values(by=['Ek'], ignore_index = True)
